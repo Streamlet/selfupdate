@@ -1,0 +1,5 @@
+executable("server") {
+  configs += [ "//build_config:project_common" ]
+
+  sources = [ "main.cc" ]
+}
