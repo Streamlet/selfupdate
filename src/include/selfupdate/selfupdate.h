@@ -18,8 +18,8 @@ PackageInfo query(std::string_view package_name,
 typedef std::function<void(unsigned long long downloaded_bytes,
                            unsigned long long total_bytes)>
     DownloadProgressMonitor;
-void download(const PackageInfo& package_url, DownloadProgressMonitor monitor);
+void download(const PackageInfo &package_url, DownloadProgressMonitor monitor);
 
-void install(const PackageInfo& PackageInfo);
+void install(const PackageInfo &PackageInfo);
 
 }  // namespace selfupdate
