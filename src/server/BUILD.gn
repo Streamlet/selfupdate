@@ -1,5 +1,8 @@
 executable("server") {
-  configs += [ "//build_config:project_common" ]
+  configs += [
+    "//build_config:project_common",
+    "//build/config/win:static_runtime",
+  ]
 
   sources = [ "main.cc" ]
 }
