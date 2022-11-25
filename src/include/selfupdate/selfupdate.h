@@ -1,25 +1,24 @@
 #pragma once
 
 #include <functional>
-#include <string_view>
+#include <string>
+#include <system_error>
 
 namespace selfupdate {
 
 struct PackageInfo {
-  std::string_view title;
-  std::string_view description;
-  std::string_view server_version;
-  std::string_view package_url;
-  std::string_view package_format;
+  std::string title;
+  std::string description;
+  std::string server_version;
+  std::string package_url;
+  std::string package_format;
 };
 
-PackageInfo query(std::string_view package_name,
-                  std::string_view client_version);
-typedef std::function<void(unsigned long long downloaded_bytes,
-                           unsigned long long total_bytes)>
+std::error_code Query(const std::string &query_url, const std::string &query_body, PackageInfo &package_info);
+typedef std::function<void(unsigned long long downloaded_bytes, unsigned long long total_bytes)>
     DownloadProgressMonitor;
-void download(const PackageInfo &package_url, DownloadProgressMonitor monitor);
+void Download(const PackageInfo &package_url, DownloadProgressMonitor monitor);
 
-void install(const PackageInfo &PackageInfo);
+void Install(const PackageInfo &package_info);
 
-}  // namespace selfupdate
+} // namespace selfupdate
