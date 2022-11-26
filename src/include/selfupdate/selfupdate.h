@@ -7,18 +7,23 @@
 namespace selfupdate {
 
 struct PackageInfo {
-  std::string title;
-  std::string description;
-  std::string server_version;
+  std::string package_name;
+  std::string package_version;
   std::string package_url;
+  size_t package_size;
   std::string package_format;
+  std::string update_title;
+  std::string update_description;
 };
 
+void Initialize(const std::string &app_name, const std::string &user_agent = "");
+
 std::error_code Query(const std::string &query_url, const std::string &query_body, PackageInfo &package_info);
+
 typedef std::function<void(unsigned long long downloaded_bytes, unsigned long long total_bytes)>
     DownloadProgressMonitor;
-void Download(const PackageInfo &package_url, DownloadProgressMonitor monitor);
+std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor);
 
-void Install(const PackageInfo &package_info);
+std::error_code Install(const PackageInfo &package_info);
 
 } // namespace selfupdate
