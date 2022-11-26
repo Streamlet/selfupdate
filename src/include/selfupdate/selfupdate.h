@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <map>
 #include <system_error>
 
 namespace selfupdate {
@@ -12,6 +13,7 @@ struct PackageInfo {
   std::string package_url;
   size_t package_size;
   std::string package_format;
+  std::map<std::string, std::string> package_hash;
   std::string update_title;
   std::string update_description;
 };
