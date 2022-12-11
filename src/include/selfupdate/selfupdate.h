@@ -26,6 +26,6 @@ typedef std::function<void(unsigned long long downloaded_bytes, unsigned long lo
     DownloadProgressMonitor;
 std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor);
 
-std::error_code Install(const PackageInfo &package_info);
+std::error_code Install(const PackageInfo &package_info, const std::string &install_dir = ".");
 
 } // namespace selfupdate
