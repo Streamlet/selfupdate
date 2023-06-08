@@ -1,8 +1,9 @@
 #pragma once
 
+#include <filesystem>
 #include <functional>
-#include <string>
 #include <map>
+#include <string>
 #include <system_error>
 
 namespace selfupdate {
@@ -18,17 +19,19 @@ struct PackageInfo {
   std::string update_description;
 };
 
-void Initialize(const std::string &app_name, const std::string &user_agent = "");
-
 std::error_code Query(const std::string &query_url, const std::string &query_body, PackageInfo &package_info);
 
 typedef std::function<void(unsigned long long downloaded_bytes, unsigned long long total_bytes)>
     DownloadProgressMonitor;
 std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor);
 
-std::error_code Install(const std::string &package_name,
-                        const std::string &package_version,
-                        const std::string &package_format,
-                        const std::string &install_dir);
+std::error_code Install(const PackageInfo &package_info,
+                        std::filesystem::path installer_path,
+                        std::filesystem::path install_location = {}, // default to executable directory
+                        std::filesystem::path launch_file = {});     // default to executable filename
 
 } // namespace selfupdate
+
+#ifndef SELFUPDATE_USER_AGENT
+#define SELFUPDATE_USER_AGENT "selfupdate"
+#endif
