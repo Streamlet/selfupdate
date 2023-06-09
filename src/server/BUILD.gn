@@ -1,8 +1,23 @@
-executable("server") {
-  configs += [ "../../build_config:project_common" ]
-  if (is_win) {
-    configs += [ "../../build/config/win:static_runtime" ]
+action("server") {
+  script = "//build_config/go_build.py"
+  args = [
+    "-o",
+    rebase_path(root_build_dir, "."),
+    "-C",
+    rebase_path(".", root_build_dir),
+  ]
+  if (is_debug) {
+    args += [
+      "-gcflags",
+      "\"-N -l\"",
+    ]
+  } else {
+    args += [
+      "-ldflags",
+      "\"-w -s\"",
+    ]
   }
 
-  sources = [ "main.cc" ]
+  sources = [ "main.go" ]
+  outputs = [ "$root_build_dir/server" ]
 }
