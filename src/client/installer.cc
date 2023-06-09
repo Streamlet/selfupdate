@@ -102,7 +102,7 @@ std::error_code DoInstall(const InstallContext &install_context) {
   if (exe_path.string().find(install_context.target) == 0)
     return make_selfupdate_error(SUE_RunInstallerPositionError);
 
-  boost::process::child main_process(install_context.wait_pid);
+  boost::process::child main_process(static_cast<boost::process::pid_t>(install_context.wait_pid));
   if (main_process.valid() && main_process.running()) {
     if (!main_process.wait_for(std::chrono::seconds(INSTALL_WAIT_FOR_MAIN_PROCESS))) {
       main_process.terminate();

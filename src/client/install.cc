@@ -24,7 +24,7 @@ std::error_code Install(const PackageInfo &package_info,
   if (!std::filesystem::exists(package_file, ec))
     return ec;
 
-  auto exe_path = boost ::dll::program_location();
+  auto exe_path = std::filesystem::path(boost ::dll::program_location().string());
   auto exe_dir = exe_path.parent_path();
   auto exe_file = exe_path.filename();
 

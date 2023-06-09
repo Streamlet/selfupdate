@@ -27,5 +27,7 @@ static_library("installer") {
     "installer.cc",
   ]
 
+  libs = [ "boost_program_options" ]
+
   deps = [ "../utility:utility" ]
 }
