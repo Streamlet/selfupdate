@@ -80,8 +80,16 @@ InstallZipPackage(std::filesystem::path package_file, std::filesystem::path inst
   if (!std::filesystem::exists(install_location))
     return make_selfupdate_error(SUE_MoveFileError);
 
-  if (std::filesystem::exists(install_location_old))
+  if (std::filesystem::exists(install_location_old)) {
+    for (const std::filesystem::directory_entry &dir_entry :
+         std::filesystem::recursive_directory_iterator(install_location_old)) {
+      std::filesystem::path file_in_new_path =
+          install_location / dir_entry.path().lexically_relative(install_location_old);
+      if (!std::filesystem::exists(file_in_new_path))
+        std::filesystem::rename(dir_entry.path(), file_in_new_path);
+    }
     std::filesystem::remove_all(install_location_old);
+  }
 
   std::filesystem::path launch_path = install_location / launch_file;
   std::filesystem::permissions(launch_path,
