@@ -27,7 +27,11 @@ static_library("installer") {
     "installer.cc",
   ]
 
-  libs = [ "boost_program_options" ]
+  if (is_win) {
+    libs = [ "libboost_program_options.lib" ]
+  } else {
+    libs = [ "boost_program_options" ]
+  }
 
   deps = [ "../utility:utility" ]
 }

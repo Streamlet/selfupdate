@@ -19,5 +19,9 @@ action("server") {
   }
 
   sources = [ "main.go" ]
-  outputs = [ "$root_build_dir/server" ]
+  if (is_win) {
+    outputs = [ "$root_build_dir/server.exe" ]
+  } else {
+    outputs = [ "$root_build_dir/server" ]
+  }
 }
