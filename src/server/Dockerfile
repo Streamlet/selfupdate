@@ -10,8 +10,7 @@ ENV INSTALL_DIR=/usr/local/selfupdate
 RUN mkdir -p ${INSTALL_DIR}/conf
 RUN cp ${BUILD_DIR}/selfupdate_server ${INSTALL_DIR}/
 
-
 FROM alpine:latest
 COPY --from=build /usr/local/selfupdate /usr/local/selfupdate
 WORKDIR /usr/local/selfupdate
-CMD [ "./selfupdate_server --port 80 --config /usr/local/selfupdate/conf" ]
+CMD [ "./selfupdate_server",  "--port=80", "--config=/usr/local/selfupdate/conf" ]
