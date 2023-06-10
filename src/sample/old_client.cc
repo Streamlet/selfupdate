@@ -4,12 +4,6 @@
 #include <selfupdate/installer.h>
 #include <selfupdate/selfupdate.h>
 
-#ifdef _WIN
-const char *NEW_CLIENT_NAME = "new_client.exe";
-#else
-const char *NEW_CLIENT_NAME = "new_client";
-#endif
-
 int main(int argc, const char *argv[]) {
 
   selfupdate::InstallContext install_context;
@@ -27,7 +21,7 @@ int main(int argc, const char *argv[]) {
 
   std::cout << "Step 1: query package info" << std::endl;
   selfupdate::PackageInfo package_info;
-  std::error_code ec = selfupdate::Query("http://localhost:8080/example/1.0", "", package_info);
+  std::error_code ec = selfupdate::Query("http://localhost:8080/sample_package/1.0", "", package_info);
   if (ec) {
     std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;
@@ -57,7 +51,7 @@ int main(int argc, const char *argv[]) {
   }
 
   std::cout << "Step 3: install package" << std::endl;
-  ec = selfupdate::Install(package_info, boost::dll::program_location().string(), {}, NEW_CLIENT_NAME);
+  ec = selfupdate::Install(package_info, {}, {});
   if (ec) {
     std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;

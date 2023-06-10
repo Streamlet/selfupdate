@@ -10,9 +10,8 @@
 namespace selfupdate {
 
 std::error_code Install(const PackageInfo &package_info,
-                        std::filesystem::path installer_path,
-                        std::filesystem::path install_location /* = {}*/,
-                        std::filesystem::path launch_file /* = {}*/) {
+                        std::filesystem::path installer_path /*= {}*/,
+                        std::filesystem::path install_location /* = {}*/) {
   std::error_code ec;
   std::filesystem::path cache_dir = std::filesystem::temp_directory_path(ec);
   if (ec)
@@ -28,10 +27,10 @@ std::error_code Install(const PackageInfo &package_info,
   auto exe_dir = exe_path.parent_path();
   auto exe_file = exe_path.filename();
 
+  if (installer_path.empty())
+    installer_path = boost::dll::program_location().string();
   if (install_location.empty())
     install_location = exe_dir.c_str();
-  if (launch_file.empty())
-    launch_file = exe_file.c_str();
 
   std::filesystem::path copied_installer_path = package_file.parent_path() / installer_path.filename();
   std::filesystem::copy_file(installer_path, copied_installer_path, std::filesystem::copy_options::overwrite_existing,
@@ -47,7 +46,7 @@ std::error_code Install(const PackageInfo &package_info,
   ss << " --" << INSTALLER_ARGUMENT_WAIT_PID << "=" << pid;
   ss << " --" << INSTALLER_ARGUMENT_SOURCE << "=\"" << package_file.string() << "\"";
   ss << " --" << INSTALLER_ARGUMENT_TARGET << "=\"" << install_location.string() << "\"";
-  ss << " --" << INSTALLER_ARGUMENT_LAUNCH_FILE << "=\"" << launch_file.string() << "\"";
+  ss << " --" << INSTALLER_ARGUMENT_LAUNCH_FILE << "=\"" << exe_file.string() << "\"";
   std::string cmd = ss.str();
 #ifdef _DEBUG
   printf("Launch updater: %s\n", cmd.c_str());

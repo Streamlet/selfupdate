@@ -7,10 +7,12 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 if sys.platform == "win32":
     old_filename = "old_client.exe"
     new_filename = "new_client.exe"
+    target_client_filename = "client.exe"
     server_filename = "selfupdate_server.exe"
 else:
     old_filename = "old_client"
     new_filename = "new_client"
+    target_client_filename = "client"
     server_filename = "selfupdate_server"
 
 
@@ -21,7 +23,10 @@ def copy_files(dir):
     os.makedirs(test_dir)
     client_dir = os.path.join(test_dir, "client")
     os.makedirs(client_dir)
-    shutil.copy(os.path.join(dir, old_filename), client_dir)
+    shutil.copy(
+        os.path.join(dir, old_filename),
+        os.path.join(client_dir, target_client_filename),
+    )
 
     server_dir = os.path.join(test_dir, "server")
     os.makedirs(server_dir)
@@ -31,9 +36,9 @@ def copy_files(dir):
 def make_package(dir):
     src_file = os.path.join(dir, new_filename)
     server_dir = os.path.join(dir, "test", "server")
-    package_file = os.path.join(server_dir, "example.zip")
+    package_file = os.path.join(server_dir, "sample_package.zip")
     with zipfile.ZipFile(package_file, "w") as zip:
-        zip.write(src_file, new_filename)
+        zip.write(src_file, target_client_filename)
 
     package_file_size = os.stat(package_file).st_size
 
@@ -47,15 +52,15 @@ def make_package(dir):
             sha256.update(buffer)
     sha256_hash = sha256.hexdigest().lower()
 
-    yaml = """package: example
+    yaml = """package: sample_package
 versions:
   2.0:
-    url: http://localhost:8080/example.zip
+    url: http://localhost:8080/sample_package.zip
     size: %d
     format: zip
     hash:
       sha256: %s
-    title: Example 2.0'
+    title: Sample 2.0'
     description: This version introduces a lot of new features
 policies:
   - matches:
@@ -66,7 +71,7 @@ policies:
         sha256_hash,
     )
 
-    config_file = os.path.join(server_dir, "example.yaml")
+    config_file = os.path.join(server_dir, "sample_package.yaml")
     with open(config_file, "w") as f:
         f.write(yaml)
 
