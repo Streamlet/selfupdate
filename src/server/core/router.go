@@ -18,8 +18,8 @@ func NewRouter(processor Processor, root string) http.Handler {
 				content, err := os.ReadFile(path)
 				if err == nil {
 					log.Printf("Request %s from %s returned raw file content: %s\n", r.RequestURI, r.RemoteAddr, path)
-					w.WriteHeader(http.StatusOK)
 					w.Header().Add("Content-Type", " application/octet-stream")
+					w.WriteHeader(http.StatusOK)
 					w.Write(content)
 					return
 				}
@@ -46,8 +46,8 @@ func NewRouter(processor Processor, root string) http.Handler {
 			log.Printf("Request %s from %s [package=%s version=%s] returned [has_new_version=false]\n", r.RequestURI, r.RemoteAddr, *packageName, clientVersion.RawString)
 		}
 
-		w.WriteHeader(http.StatusOK)
 		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 		w.Write(body)
 	})
 
