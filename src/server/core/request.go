@@ -12,7 +12,6 @@ func parseRequestPath(urlPath string) (*string, *version.Version, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	normalizedurlPath = strings.ToLower(normalizedurlPath)
 	// /packageName/clientVersion
 	urlParts := strings.Split(strings.Trim(normalizedurlPath, "/"), "/")
 	if len(urlParts) != 2 {
