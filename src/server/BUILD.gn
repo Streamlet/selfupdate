@@ -18,10 +18,21 @@ action("server") {
     ]
   }
 
-  sources = [ "main.go" ]
+  sources = [
+    "config/package_config.go",
+    "core/processor.go",
+    "core/request.go",
+    "core/response.go",
+    "core/router.go",
+    "http/server.go",
+    "main.go",
+    "version/version.go",
+    "version/version_test.go",
+  ]
+
   if (is_win) {
-    outputs = [ "$root_build_dir/server.exe" ]
+    outputs = [ "$root_build_dir/selfupdate_server.exe" ]
   } else {
-    outputs = [ "$root_build_dir/server" ]
+    outputs = [ "$root_build_dir/selfupdate_server" ]
   }
 }

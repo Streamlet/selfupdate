@@ -17,7 +17,9 @@ namespace {
 const unsigned QUERY_TIMEOUT = 10000;
 
 const char *PACKAGEINFO_PACKAGE_NAME = "package_name";
+const char *PACKAGEINFO_HAS_NEW_VERSION = "has_new_version";
 const char *PACKAGEINFO_PACKAGE_VERSION = "package_version";
+const char *PACKAGEINFO_FORCE_UPDATE = "force_update";
 const char *PACKAGEINFO_PACKAGE_URL = "package_url";
 const char *PACKAGEINFO_PACKAGE_SIZE = "package_size";
 const char *PACKAGEINFO_PACKAGE_FORMAT = "package_format";
@@ -44,21 +46,32 @@ std::error_code Query(const std::string &query_url, const std::string &query_bod
       response);
   if (doc.HasParseError())
     return make_selfupdate_error(SUE_PackageInfoFormatError);
-
   if (!doc.HasMember(PACKAGEINFO_PACKAGE_NAME) || !doc[PACKAGEINFO_PACKAGE_NAME].IsString() ||
-      !doc.HasMember(PACKAGEINFO_PACKAGE_VERSION) || !doc[PACKAGEINFO_PACKAGE_VERSION].IsString() ||
+      !doc.HasMember(PACKAGEINFO_HAS_NEW_VERSION) || !doc[PACKAGEINFO_HAS_NEW_VERSION].IsBool()) {
+    return make_selfupdate_error(SUE_PackageInfoFormatError);
+  }
+  package_info.package_name.assign(doc[PACKAGEINFO_PACKAGE_NAME].GetString(),
+                                   doc[PACKAGEINFO_PACKAGE_NAME].GetStringLength());
+  package_info.has_new_version = doc[PACKAGEINFO_HAS_NEW_VERSION].GetBool();
+  if (!package_info.has_new_version)
+    return {};
+
+  if (!doc.HasMember(PACKAGEINFO_PACKAGE_VERSION) || !doc[PACKAGEINFO_PACKAGE_VERSION].IsString() ||
+      (doc.HasMember(PACKAGEINFO_FORCE_UPDATE) && !doc[PACKAGEINFO_FORCE_UPDATE].IsBool()) ||
       !doc.HasMember(PACKAGEINFO_PACKAGE_URL) || !doc[PACKAGEINFO_PACKAGE_URL].IsString() ||
       !doc.HasMember(PACKAGEINFO_PACKAGE_SIZE) || !doc[PACKAGEINFO_PACKAGE_SIZE].IsUint64() ||
       !doc.HasMember(PACKAGEINFO_PACKAGE_FORMAT) || !doc[PACKAGEINFO_PACKAGE_FORMAT].IsString() ||
       !doc.HasMember(PACKAGEINFO_PACKAGE_HASH) || !doc[PACKAGEINFO_PACKAGE_HASH].IsObject() ||
       !doc.HasMember(PACKAGEINFO_UPDATE_TITLE) || !doc[PACKAGEINFO_UPDATE_TITLE].IsString() ||
-      !doc.HasMember(PACKAGEINFO_UPDATE_DESCRIPTION) || !doc[PACKAGEINFO_UPDATE_DESCRIPTION].IsString())
+      !doc.HasMember(PACKAGEINFO_UPDATE_DESCRIPTION) || !doc[PACKAGEINFO_UPDATE_DESCRIPTION].IsString()) {
     return make_selfupdate_error(SUE_PackageInfoFormatError);
+  }
 
-  package_info.package_name.assign(doc[PACKAGEINFO_PACKAGE_NAME].GetString(),
-                                   doc[PACKAGEINFO_PACKAGE_NAME].GetStringLength());
   package_info.package_version.assign(doc[PACKAGEINFO_PACKAGE_VERSION].GetString(),
                                       doc[PACKAGEINFO_PACKAGE_VERSION].GetStringLength());
+  if (doc.HasMember(PACKAGEINFO_FORCE_UPDATE)) {
+    package_info.force_update = doc[PACKAGEINFO_FORCE_UPDATE].GetBool();
+  }
   package_info.package_url.assign(doc[PACKAGEINFO_PACKAGE_URL].GetString(),
                                   doc[PACKAGEINFO_PACKAGE_URL].GetStringLength());
   package_info.package_size = doc[PACKAGEINFO_PACKAGE_SIZE].GetUint64();

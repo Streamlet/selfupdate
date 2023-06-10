@@ -1,0 +1,29 @@
+package: sample_package
+versions:
+  1.1.1:
+    url: http://dl.streamlet.org/sample_package_1.1.1.zip
+    size: 1024
+    format: zip
+    hash:
+      md5: d41d8cd98f00b204e9800998ecf8427e
+    title: SamplePackage 1.1.0"
+    description: This the most stable version of 1.x serials
+  2.2.2:
+    url: http://dl.streamlet.org/sample_package_2.2.2.zip
+    size: 2048
+    format: zip
+    hash:
+      md5: d41d8cd98f00b204e9800998ecf8427e
+    title: SamplePackage 2.2.2
+    description: This the latest version
+policies:
+  - matches:
+      - "[,1.1.1)"
+      - "1.2.1"
+    target: 1.1.1
+    force: true
+    title: "Upgrade to 1.1.1 Now!"
+  - matches:
+      - "[2.0.0,2.2.2)"
+    target: 2.2.2
+    description: A lot of new features

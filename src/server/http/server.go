@@ -1,4 +1,4 @@
-package server
+package http
 
 import (
 	"context"
@@ -31,13 +31,13 @@ func NewSockServer(sock string, handler http.Handler, errorChan chan error) Http
 
 type portServer struct {
 	http.Server
-	port uint
+	port      uint
 	errorChan chan error
 }
 
 type sockServer struct {
 	http.Server
-	sock string
+	sock      string
 	errorChan chan error
 }
 
