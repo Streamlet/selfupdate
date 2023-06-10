@@ -42,14 +42,17 @@ std::error_code Install(const PackageInfo &package_info,
   int pid = boost::this_process::get_id();
   const std::string program_option_prefix = "--";
   std::stringstream ss;
-  ss << copied_installer_path;
-  ss << " --" << INSTALLER_ARGUMENT_UPDATE;
+  ss << copied_installer_path.string();
+  ss << " --\"" << INSTALLER_ARGUMENT_UPDATE << "\"";
   ss << " --" << INSTALLER_ARGUMENT_WAIT_PID << "=" << pid;
-  ss << " --" << INSTALLER_ARGUMENT_SOURCE << "=" << package_file;
-  ss << " --" << INSTALLER_ARGUMENT_TARGET << "=" << install_location;
-  ss << " --" << INSTALLER_ARGUMENT_LAUNCH_FILE << "=" << launch_file;
-
-  boost::process::spawn(ss.str());
+  ss << " --" << INSTALLER_ARGUMENT_SOURCE << "=\"" << package_file.string() << "\"";
+  ss << " --" << INSTALLER_ARGUMENT_TARGET << "=\"" << install_location.string() << "\"";
+  ss << " --" << INSTALLER_ARGUMENT_LAUNCH_FILE << "=\"" << launch_file.string() << "\"";
+  std::string cmd = ss.str();
+#ifdef _DEBUG
+  printf("Launch updater: %s\n", cmd.c_str());
+#endif
+  boost::process::spawn(cmd);
   return {};
 }
 

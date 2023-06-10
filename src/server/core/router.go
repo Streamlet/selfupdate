@@ -4,13 +4,26 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
-func NewRouter(processor Processor) http.Handler {
+func NewRouter(processor Processor, root string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		packageName, clientVersion, err := parseRequestPath(r.RequestURI)
 		if err != nil {
+			if len(root) > 0 {
+				path := filepath.Join(filepath.FromSlash(root), filepath.FromSlash(r.RequestURI))
+				content, err := os.ReadFile(path)
+				if err == nil {
+					log.Printf("Request %s from %s returned raw file content: %s\n", r.RequestURI, r.RemoteAddr, path)
+					w.WriteHeader(http.StatusOK)
+					w.Header().Add("Content-Type", " application/octet-stream")
+					w.Write(content)
+					return
+				}
+			}
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
