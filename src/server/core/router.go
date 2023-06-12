@@ -17,7 +17,7 @@ func NewRouter(processor Processor, root string) http.Handler {
 				path := filepath.Join(filepath.FromSlash(root), filepath.FromSlash(r.RequestURI))
 				content, err := os.ReadFile(path)
 				if err == nil {
-					log.Printf("Request %s from %s returned raw file content: %s\n", r.RequestURI, r.RemoteAddr, path)
+					log.Printf("%s %s from %s returned raw file content: %s\n", r.Method, r.RequestURI, r.RemoteAddr, path)
 					w.Header().Add("Content-Type", " application/octet-stream")
 					w.WriteHeader(http.StatusOK)
 					w.Write(content)
@@ -30,7 +30,7 @@ func NewRouter(processor Processor, root string) http.Handler {
 
 		result := processor.process(*packageName, clientVersion)
 		if result == nil {
-			log.Printf("Request %s from %s [package=%s version=%s] returned 404\n", r.RequestURI, r.RemoteAddr, *packageName, clientVersion.RawString)
+			log.Printf("%s %s from %s [package=%s version=%s] returned 404\n", r.Method, r.RequestURI, r.RemoteAddr, *packageName, clientVersion.RawString)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -41,7 +41,7 @@ func NewRouter(processor Processor, root string) http.Handler {
 			return
 		}
 		if result.HasNewVersion {
-			log.Printf("Request %s from %s [package=%s version=%s] returned [version=%s]\n", r.RequestURI, r.RemoteAddr, *packageName, clientVersion.RawString, *result.PackageVersion)
+			log.Printf("%s %s from %s [package=%s version=%s] returned [version=%s]\n", r.Method, r.RequestURI, r.RemoteAddr, *packageName, clientVersion.RawString, *result.PackageVersion)
 		} else {
 			log.Printf("Request %s from %s [package=%s version=%s] returned [has_new_version=false]\n", r.RequestURI, r.RemoteAddr, *packageName, clientVersion.RawString)
 		}

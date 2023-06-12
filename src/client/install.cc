@@ -42,7 +42,7 @@ std::error_code Install(const PackageInfo &package_info,
   const std::string program_option_prefix = "--";
   std::stringstream ss;
   ss << copied_installer_path.string();
-  ss << " --\"" << INSTALLER_ARGUMENT_UPDATE << "\"";
+  ss << " --" << INSTALLER_ARGUMENT_UPDATE;
   ss << " --" << INSTALLER_ARGUMENT_WAIT_PID << "=" << pid;
   ss << " --" << INSTALLER_ARGUMENT_SOURCE << "=\"" << package_file.string() << "\"";
   ss << " --" << INSTALLER_ARGUMENT_TARGET << "=\"" << install_location.string() << "\"";
