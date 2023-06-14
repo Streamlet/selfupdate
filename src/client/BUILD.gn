@@ -33,5 +33,8 @@ static_library("installer") {
     libs = [ "boost_program_options" ]
   }
 
-  deps = [ "../utility:utility" ]
+  deps = [
+    "../../thirdparty/ZLibWrap/src:zlibwrap",
+    "../utility:utility",
+  ]
 }

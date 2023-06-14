@@ -10,7 +10,6 @@ executable("old_client") {
   sources = [ "old_client.cc" ]
 
   deps = [
-    "../../thirdparty/ZLibWrap/src:zlibwrap",
     "../client:installer",
     "../client:selfupdate",
   ]
