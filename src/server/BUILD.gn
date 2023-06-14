@@ -1,10 +1,10 @@
 action("server") {
-  script = "../../build_config/go_build.py"
+  script = "go_build.py"
   args = [
     "-o",
-    rebase_path(root_build_dir, "."),
+    rebase_path(root_out_dir, "."),
     "-C",
-    rebase_path(".", root_build_dir),
+    rebase_path(".", root_out_dir),
   ]
   if (is_debug) {
     args += [
@@ -31,8 +31,8 @@ action("server") {
   ]
 
   if (is_win) {
-    outputs = [ "$root_build_dir/selfupdate_server.exe" ]
+    outputs = [ "$root_out_dir/selfupdate_server.exe" ]
   } else {
-    outputs = [ "$root_build_dir/selfupdate_server" ]
+    outputs = [ "$root_out_dir/selfupdate_server" ]
   }
 }
