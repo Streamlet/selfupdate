@@ -1,5 +1,5 @@
 action("server") {
-  script = "//build_config/go_build.py"
+  script = "../../build_config/go_build.py"
   args = [
     "-o",
     rebase_path(root_build_dir, "."),
