@@ -51,7 +51,7 @@ int main(int argc, const char *argv[]) {
   }
 
   std::cout << "Step 3: install package" << std::endl;
-  ec = selfupdate::Install(package_info, {}, {});
+  ec = selfupdate::Install(package_info);
   if (ec) {
     std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;

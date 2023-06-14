@@ -28,7 +28,7 @@ typedef std::function<void(unsigned long long downloaded_bytes, unsigned long lo
 std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor);
 
 std::error_code Install(const PackageInfo &package_info,
-                        std::filesystem::path installer_path,         // default to the executable path
+                        std::filesystem::path installer_path = {},    // default to the executable path
                         std::filesystem::path install_location = {}); // default to the executable directory
 
 } // namespace selfupdate
