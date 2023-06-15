@@ -51,7 +51,7 @@ std::error_code Install(const PackageInfo &package_info,
 #ifdef _DEBUG
   printf("Launch updater: %s\n", cmd.c_str());
 #endif
-  boost::process::spawn(cmd);
+  boost::process::spawn(cmd, boost::process::start_dir(copied_installer_path.parent_path().string()));
   return {};
 }
 
