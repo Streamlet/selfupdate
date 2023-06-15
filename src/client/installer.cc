@@ -58,6 +58,7 @@ namespace {
 
 const char *INSTALL_LOCATION_OLD_SUFFIX = ".old";
 const char *INSTALL_LOCATION_NEW_SUFFIX = ".new";
+const int INSTALL_WAIT_FOR_MAIN_PROCESS = 10;
 
 std::error_code InstallZipPackage(const std::filesystem::path &package_file,
                                   const std::filesystem::path &install_location) {
@@ -72,10 +73,11 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
     return make_selfupdate_error(SUE_PackageExtractError);
 
   std::error_code ec;
-  if (std::filesystem::exists(install_location)) {
+  for (int i = 0; i < INSTALL_WAIT_FOR_MAIN_PROCESS && std::filesystem::exists(install_location); ++i) {
     std::filesystem::rename(install_location, install_location_old, ec);
-    if (ec)
-      return ec;
+    if (ec) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
   if (std::filesystem::exists(install_location))
     return make_selfupdate_error(SUE_MoveFileError);
@@ -100,8 +102,6 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
 }
 
 } // namespace
-
-const int INSTALL_WAIT_FOR_MAIN_PROCESS = 10;
 
 std::error_code DoInstall(const InstallContext &install_context) {
   auto exe_path = std::filesystem::path(boost ::dll::program_location().string());
