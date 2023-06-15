@@ -154,7 +154,7 @@ std::error_code DoInstall(const InstallContext &install_context) {
                                std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
                                    std::filesystem::perms::others_exec,
                                std::filesystem::perm_options::add);
-  boost::process::spawn(launch_path.string());
+  boost::process::spawn(launch_path.string(), boost::process::start_dir(launch_path.parent_path().string()));
 
   return {};
 }
