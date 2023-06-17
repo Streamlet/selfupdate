@@ -1,11 +1,11 @@
 #include "../include/selfupdate/selfupdate.h"
+#include "../utility/crypto.h"
+#include "../utility/http_client.h"
 #include "common.h"
 #include <cstdio>
 #include <filesystem>
 #include <loki/ScopeGuard.h>
 #include <sstream>
-#include <utility/crypto.h>
-#include <utility/http_client.h>
 
 #ifdef _WIN32
 #else

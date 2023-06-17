@@ -1,9 +1,9 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 
 #include "../include/selfupdate/selfupdate.h"
+#include "../utility/http_client.h"
 #include "common.h"
 #include <rapidjson/document.h>
-#include <utility/http_client.h>
 
 #ifndef _WIN32
 #include <strings.h>

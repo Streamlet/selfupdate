@@ -1,5 +1,4 @@
 static_library("selfupdate") {
-  configs += [ "../../build_config:project_common" ]
   if (is_posix) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
@@ -12,11 +11,15 @@ static_library("selfupdate") {
     "query.cc",
   ]
 
-  deps = [ "../utility:utility" ]
+  deps = [
+    "../../thirdparty:boost",
+    "../../thirdparty:loki",
+    "../../thirdparty:rapidjson",
+    "../utility:utility",
+  ]
 }
 
 static_library("installer") {
-  configs += [ "../../build_config:project_common" ]
   if (is_posix) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
@@ -34,7 +37,9 @@ static_library("installer") {
   }
 
   deps = [
-    "../../thirdparty/ZLibWrap/src:zlibwrap",
+    "../../thirdparty:boost",
+    "../../thirdparty:loki",
+    "../../thirdparty:zlibwrap",
     "../utility:utility",
   ]
 }

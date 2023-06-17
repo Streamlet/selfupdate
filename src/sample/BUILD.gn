@@ -2,14 +2,11 @@ executable("old_client") {
   testonly = true
 
   include_dirs = [ "../include" ]
-  configs += [ "../../build_config:project_common" ]
-  if (is_win) {
-    configs += [ "../../build/config/win:static_runtime" ]
-  }
 
   sources = [ "old_client.cc" ]
 
   deps = [
+    "../../thirdparty:boost",
     "../client:installer",
     "../client:selfupdate",
   ]
@@ -17,11 +14,6 @@ executable("old_client") {
 
 executable("new_client") {
   testonly = true
-
-  configs += [ "../../build_config:project_common" ]
-  if (is_win) {
-    configs += [ "../../build/config/win:static_runtime" ]
-  }
 
   sources = [ "new_client.cc" ]
 }
