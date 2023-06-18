@@ -1,22 +1,5 @@
-action("server") {
-  script = "go_build.py"
-  args = [
-    "-o",
-    rebase_path(root_out_dir, "."),
-    "-C",
-    rebase_path(".", root_out_dir),
-  ]
-  if (is_debug) {
-    args += [
-      "-gcflags",
-      "\"-N -l\"",
-    ]
-  } else {
-    args += [
-      "-ldflags",
-      "\"-w -s\"",
-    ]
-  }
+golang("server") {
+  go_root_dir = "."
 
   sources = [
     "config/package_config.go",
@@ -31,8 +14,8 @@ action("server") {
   ]
 
   if (is_win) {
-    outputs = [ "$root_out_dir/selfupdate_server.exe" ]
+    go_outputs = [ "$root_out_dir/selfupdate_server.exe" ]
   } else {
-    outputs = [ "$root_out_dir/selfupdate_server" ]
+    go_outputs = [ "$root_out_dir/selfupdate_server" ]
   }
 }
