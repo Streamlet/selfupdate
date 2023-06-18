@@ -14,7 +14,7 @@ struct PackageInfo {
   std::string package_version;
   bool force_update = false;
   std::string package_url;
-  size_t package_size = 0;
+  unsigned long long package_size = 0;
   std::string package_format;
   std::map<std::string, std::string> package_hash;
   std::string update_title;
