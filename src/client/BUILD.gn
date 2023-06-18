@@ -33,7 +33,7 @@ static_library("installer") {
   if (is_win) {
     libs = [ "libboost_program_options.lib" ]
   } else {
-    libs = [ "boost_program_options" ]
+    libs = [ "boost_program_options", "boost_filesystem" ]
   }
 
   deps = [

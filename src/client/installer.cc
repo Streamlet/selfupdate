@@ -76,7 +76,11 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
   for (int i = 0; i < INSTALL_WAIT_FOR_MAIN_PROCESS && std::filesystem::exists(install_location); ++i) {
     std::filesystem::rename(install_location, install_location_old, ec);
     if (ec) {
+  #if _WIN32
       std::this_thread::sleep_for(std::chrono::seconds(1));
+  #else
+      break;
+#endif
     }
   }
   if (std::filesystem::exists(install_location))
