@@ -11,6 +11,7 @@ namespace selfupdate {
 
 const SelfUpdateErrorMessage selfupdate_error_message_[SUE_Count] = {
     {_(SUE_OK, "OK")},
+    {_(SUE_NetworkError, "network error")},
     {_(SUE_PackageInfoFormatError, "package info format error")},
     {_(SUE_UnsupportedPackageFormat, "unsupported package format")},
     {_(SUE_PackageSizeError, "package size error")},

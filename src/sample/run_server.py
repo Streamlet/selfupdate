@@ -60,7 +60,7 @@ versions:
     format: zip
     hash:
       sha256: %s
-    title: Sample 2.0'
+    title: Sample 2.0
     description: This version introduces a lot of new features
 policies:
   - matches:

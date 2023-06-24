@@ -4,6 +4,7 @@ namespace selfupdate {
 
 enum selfupdate_error_code {
   SUE_OK = 0,
+  SUE_NetworkError,
   SUE_PackageInfoFormatError,
   SUE_UnsupportedPackageFormat,
   SUE_PackageSizeError,
