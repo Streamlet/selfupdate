@@ -120,7 +120,7 @@ def test(dir):
 
 
 def main():
-    dir = sys.argv[1]
+    dir = os.path.normpath(sys.argv[1])
     copy_files(dir)
     make_package(dir)
     process = run_server(dir)
