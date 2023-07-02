@@ -125,8 +125,10 @@ def main():
     make_package(dir)
     process = run_server(dir)
     test(dir)
-    os.kill(process.pid, 9)
-    process.send_signal(signal.CTRL_C_EVENT)
+    if (sys.platform == 'win32'):
+        process.send_signal(signal.CTRL_C_EVENT)
+    else:
+        process.terminate()
 
 
 if __name__ == '__main__':
