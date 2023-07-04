@@ -9,7 +9,7 @@ import hashlib
 import subprocess
 import locale
 import signal
-from http.server import HTTPServer, BaseHTTPRequestHandler
+
 
 if sys.platform == 'win32':
     old_filename = 'old_client.exe'
