@@ -48,9 +48,6 @@ std::error_code Install(const PackageInfo &package_info,
   ss << " --" << INSTALLER_ARGUMENT_TARGET << "=\"" << install_location.string() << "\"";
   ss << " --" << INSTALLER_ARGUMENT_LAUNCH_FILE << "=\"" << exe_file.string() << "\"";
   std::string cmd = ss.str();
-#ifdef _DEBUG
-  printf("Launch updater: %s\n", cmd.c_str());
-#endif
   boost::process::spawn(cmd, boost::process::start_dir(copied_installer_path.parent_path().string()));
   return {};
 }

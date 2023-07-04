@@ -76,9 +76,9 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
   for (int i = 0; i < INSTALL_WAIT_FOR_MAIN_PROCESS && std::filesystem::exists(install_location); ++i) {
     std::filesystem::rename(install_location, install_location_old, ec);
     if (ec) {
-  #if _WIN32
+#if _WIN32
       std::this_thread::sleep_for(std::chrono::seconds(1));
-  #else
+#else
       break;
 #endif
     }
@@ -141,9 +141,6 @@ std::error_code DoInstall(const InstallContext &install_context) {
   ss << L"cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"" << exe_path.native() << L"\" & RMDIR /Q \""
      << exe_path.parent_path().native() << L"\"";
   std::wstring cmd = ss.str();
-#ifdef _DEBUG
-  wprintf(L"Self delete command: %s\n", cmd.c_str());
-#endif
   STARTUPINFO si = {sizeof(STARTUPINFO)};
   PROCESS_INFORMATION pi = {};
   ::CreateProcess(nullptr, cmd.data(), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
