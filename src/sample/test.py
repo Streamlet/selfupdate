@@ -91,8 +91,8 @@ def run_server(dir):
 
     print(cmd)
     return subprocess.Popen(cmd,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
                             shell=True)
 
 
