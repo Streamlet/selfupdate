@@ -92,16 +92,14 @@ def run_server(dir):
     print(cmd)
     return subprocess.Popen(cmd,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            shell=True)
+                            stderr=subprocess.STDOUT)
 
 
 def cmd(cmd):
     print(cmd)
     process = subprocess.Popen(cmd,
                                stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT,
-                               shell=True)
+                               stderr=subprocess.STDOUT)
     encoding = locale.getpreferredencoding(False)
     (stdoutdata, _) = process.communicate()
     encoding = locale.getpreferredencoding(False)
@@ -125,10 +123,7 @@ def main():
     make_package(dir)
     process = run_server(dir)
     test(dir)
-    if (sys.platform == 'win32'):
-        process.send_signal(signal.CTRL_C_EVENT)
-    else:
-        process.terminate()
+    process.kill()
 
 
 if __name__ == '__main__':
