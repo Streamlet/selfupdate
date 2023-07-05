@@ -86,10 +86,10 @@ policies:
 def run_server(dir):
     server_dir = os.path.join(dir, 'test', 'server')
     server_file = os.path.join(server_dir, server_filename)
-    cmd = server_file + \
-        ' --port=8080 --config=%s --root=%s' % (server_dir, server_dir)
+    cmd = [server_file, '--port=8080',  '--config=%s' %
+           server_dir, '--root=%s' % server_dir]
 
-    print(cmd)
+    print(' '.join(cmd))
     return subprocess.Popen(cmd,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
