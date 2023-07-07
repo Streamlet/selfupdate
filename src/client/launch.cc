@@ -31,11 +31,11 @@ bool IsNewVersionFirstLaunched(boost::program_options::basic_command_line_parser
 } // namespace
 
 bool IsNewVersionFirstLaunched(int argc, const char *const argv[]) {
-  return IsNewVersionFirstLaunched(boost::program_options::basic_command_line_parser(argc, argv));
+  return IsNewVersionFirstLaunched(boost::program_options::basic_command_line_parser<char>(argc, argv));
 }
 
 bool IsNewVersionFirstLaunched(int argc, const wchar_t *const argv[]) {
-  return IsNewVersionFirstLaunched(boost::program_options::basic_command_line_parser(argc, argv));
+  return IsNewVersionFirstLaunched(boost::program_options::basic_command_line_parser<wchar_t>(argc, argv));
 }
 
 #ifdef _WIN32

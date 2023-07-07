@@ -68,11 +68,11 @@ const InstallContext *IsInstallMode(boost::program_options::basic_command_line_p
 } // namespace
 
 const InstallContext *IsInstallMode(int argc, const char *const argv[]) {
-  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser(argc, argv)));
+  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser<char>(argc, argv)));
 }
 
 const InstallContext *IsInstallMode(int argc, const wchar_t *const argv[]) {
-  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser(argc, argv)));
+  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser<wchar_t>(argc, argv)));
 }
 
 #ifdef _WIN32
