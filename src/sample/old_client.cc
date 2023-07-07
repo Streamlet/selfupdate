@@ -6,9 +6,9 @@
 
 int main(int argc, const char *argv[]) {
 
-  selfupdate::InstallContext install_context;
-  if (selfupdate::IsInstallMode(argc, argv, install_context)) {
-    std::cout << "Install from " << install_context.source << " to " << install_context.target << std::endl;
+  const selfupdate::InstallContext *install_context = selfupdate::IsInstallMode(argc, argv);
+  if (install_context != nullptr) {
+    std::cout << "Installing..." << std::endl;
     std::error_code ec = selfupdate::DoInstall(install_context);
     if (ec) {
       std::cout << ec.value() << ": " << ec.message() << std::endl;

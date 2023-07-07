@@ -114,7 +114,7 @@ def test(dir):
     print(result)
     lines = result.splitlines()
     assert lines[0] == 'This is old client.'
-    assert lines[len(lines) - 1] == 'This is new client.'
+    assert lines[len(lines) - 1] == 'This is new client. Welcome!'
 
 
 def main():

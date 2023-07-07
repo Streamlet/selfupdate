@@ -16,4 +16,8 @@ executable("new_client") {
   testonly = true
 
   sources = [ "new_client.cc" ]
+  deps = [
+    "../../thirdparty:boost",
+    "../client:selfupdate",
+  ]
 }

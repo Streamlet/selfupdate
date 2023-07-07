@@ -8,8 +8,19 @@ static_library("selfupdate") {
     "common.h",
     "download.cc",
     "install.cc",
+    "launch.cc",
+    "native_string.h",
     "query.cc",
   ]
+
+  if (is_win) {
+    libs = [ "libboost_program_options.lib" ]
+  } else {
+    libs = [
+      "boost_program_options",
+      "boost_filesystem",
+    ]
+  }
 
   deps = [
     "../../thirdparty:boost",
@@ -33,7 +44,10 @@ static_library("installer") {
   if (is_win) {
     libs = [ "libboost_program_options.lib" ]
   } else {
-    libs = [ "boost_program_options", "boost_filesystem" ]
+    libs = [
+      "boost_program_options",
+      "boost_filesystem",
+    ]
   }
 
   deps = [

@@ -1,18 +1,18 @@
 #pragma once
 
-#include <string>
 #include <system_error>
 
 namespace selfupdate {
 
-struct InstallContext {
-  int wait_pid = 0;
-  std::string source;
-  std::string target;
-  std::string launch_file;
-};
+struct InstallContext;
 
-bool IsInstallMode(int argc, const char *argv[], InstallContext &install_context);
-std::error_code DoInstall(const InstallContext &install_context);
+const InstallContext *IsInstallMode(int argc, const char *const argv[]);
+const InstallContext *IsInstallMode(int argc, const wchar_t *const argv[]);
+#ifdef _WIN32
+const InstallContext *IsInstallMode(const char *cmdline);
+const InstallContext *IsInstallMode(const wchar_t *cmdline);
+#endif
+
+std::error_code DoInstall(const InstallContext *install_context);
 
 } // namespace selfupdate

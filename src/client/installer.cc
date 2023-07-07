@@ -1,5 +1,6 @@
 #include "../include/selfupdate/installer.h"
 #include "common.h"
+#include "native_string.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process.hpp>
@@ -16,43 +17,74 @@
 
 namespace selfupdate {
 
-bool IsInstallMode(int argc, const char *argv[], InstallContext &install_context) {
+struct InstallContext {
+  int wait_pid = 0;
+  std::filesystem::path source;
+  std::filesystem::path target;
+  std::filesystem::path launch_file;
+};
+
+namespace {
+
+template <typename charT>
+const InstallContext *IsInstallMode(boost::program_options::basic_command_line_parser<charT> parser) {
   boost::program_options::options_description desc;
-  desc.add_options()(INSTALLER_ARGUMENT_UPDATE,
-                     "")(INSTALLER_ARGUMENT_WAIT_PID, boost::program_options::value<int>(),
-                         "")(INSTALLER_ARGUMENT_SOURCE, boost::program_options::value<std::string>(),
-                             "")(INSTALLER_ARGUMENT_TARGET, boost::program_options::value<std::string>(),
-                                 "")(INSTALLER_ARGUMENT_LAUNCH_FILE, boost::program_options::value<std::string>(), "");
+  // clang-format off
+  desc.add_options()
+    (INSTALLER_ARGUMENT_UPDATE, "")
+    (INSTALLER_ARGUMENT_WAIT_PID, boost::program_options::value<int>(), "")
+    (INSTALLER_ARGUMENT_SOURCE, boost::program_options::value<std::filesystem::path>(),"")
+    (INSTALLER_ARGUMENT_TARGET, boost::program_options::value<std::filesystem::path>(), "")
+    (INSTALLER_ARGUMENT_LAUNCH_FILE, boost::program_options::value<std::filesystem::path>(), "");
+  // clang-format on
   boost::program_options::variables_map vm;
   try {
-    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
+    boost::program_options::store(parser.options(desc).run(), vm);
   } catch (boost::program_options::unknown_option e) {
-    return false;
+    return nullptr;
   } catch (boost::program_options::invalid_option_value e) {
-    return false;
+    return nullptr;
   }
   boost::program_options::notify(vm);
 
-  if (!vm.count(INSTALLER_ARGUMENT_UPDATE) || !vm.count(INSTALLER_ARGUMENT_WAIT_PID) ||
-      !vm.count(INSTALLER_ARGUMENT_SOURCE) || !vm.count(INSTALLER_ARGUMENT_TARGET) ||
-      !vm.count(INSTALLER_ARGUMENT_LAUNCH_FILE)) {
-    return false;
+  if (vm.count(INSTALLER_ARGUMENT_UPDATE) <= 0) {
+    return nullptr;
+  }
+  if (vm.count(INSTALLER_ARGUMENT_WAIT_PID) <= 0 || vm.count(INSTALLER_ARGUMENT_SOURCE) <= 0 ||
+      vm.count(INSTALLER_ARGUMENT_TARGET) <= 0 || vm.count(INSTALLER_ARGUMENT_LAUNCH_FILE) <= 0) {
+    return nullptr;
   }
 
-  install_context.wait_pid = vm[INSTALLER_ARGUMENT_WAIT_PID].as<int>();
-  install_context.source = vm[INSTALLER_ARGUMENT_SOURCE].as<std::string>();
-  install_context.target = vm[INSTALLER_ARGUMENT_TARGET].as<std::string>();
-  install_context.launch_file = vm[INSTALLER_ARGUMENT_LAUNCH_FILE].as<std::string>();
+  InstallContext *install_context = new InstallContext;
 
-  auto is_quote = [](char ch) {
-    return ch == '"';
-  };
-  boost::algorithm::trim_if(install_context.source, is_quote);
-  boost::algorithm::trim_if(install_context.target, is_quote);
-  boost::algorithm::trim_if(install_context.launch_file, is_quote);
+  install_context->wait_pid = vm[INSTALLER_ARGUMENT_WAIT_PID].as<int>();
+  install_context->source = vm[INSTALLER_ARGUMENT_SOURCE].as<std::filesystem::path>();
+  install_context->target = vm[INSTALLER_ARGUMENT_TARGET].as<std::filesystem::path>();
+  install_context->launch_file = vm[INSTALLER_ARGUMENT_LAUNCH_FILE].as<std::filesystem::path>();
 
-  return true;
+  return install_context;
 }
+
+} // namespace
+
+const InstallContext *IsInstallMode(int argc, const char *const argv[]) {
+  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser(argc, argv)));
+}
+
+const InstallContext *IsInstallMode(int argc, const wchar_t *const argv[]) {
+  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser(argc, argv)));
+}
+
+#ifdef _WIN32
+const InstallContext *IsInstallMode(const char *command_line) {
+  return std::move(IsInstallMode(
+      boost::program_options::basic_command_line_parser(boost::program_options::split_winmain(command_line))));
+}
+const InstallContext *IsInstallMode(const wchar_t *command_line) {
+  return std::move(IsInstallMode(
+      boost::program_options::basic_command_line_parser(boost::program_options::split_winmain(command_line))));
+}
+#endif
 
 namespace {
 
@@ -107,13 +139,14 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
 
 } // namespace
 
-std::error_code DoInstall(const InstallContext &install_context) {
-  auto exe_path = std::filesystem::path(boost ::dll::program_location().string());
-  if (exe_path.string().find(install_context.target) == 0)
+std::error_code DoInstall(const InstallContext *install_context) {
+  auto install_context_ptr = std::unique_ptr<const InstallContext>(install_context);
+  auto exe_path = std::filesystem::path(boost ::dll::program_location().native());
+  if (exe_path.native().find(install_context->target) == 0)
     return make_selfupdate_error(SUE_RunInstallerPositionError);
 
   try {
-    boost::process::child main_process(static_cast<boost::process::pid_t>(install_context.wait_pid));
+    boost::process::child main_process(static_cast<boost::process::pid_t>(install_context->wait_pid));
     if (main_process.valid() && main_process.running()) {
       if (!main_process.wait_for(std::chrono::seconds(INSTALL_WAIT_FOR_MAIN_PROCESS))) {
         main_process.terminate();
@@ -122,11 +155,11 @@ std::error_code DoInstall(const InstallContext &install_context) {
   } catch (boost::process::process_error e) {
   }
 
-  std::filesystem::path package_file = install_context.source;
-  std::filesystem::path install_location = install_context.target;
+  std::filesystem::path package_file = install_context->source;
+  std::filesystem::path install_location = install_context->target;
 
-  std::string package_format = package_file.extension().string();
-  if (package_format == std::string(FILE_NAME_EXT_SEP) + PACKAGEINFO_PACKAGE_FORMAT_ZIP) {
+  tstring package_format = package_file.extension().native();
+  if (package_format == _T(FILE_NAME_EXT_SEP PACKAGEINFO_PACKAGE_FORMAT_ZIP)) {
     std::error_code ec = InstallZipPackage(std::move(package_file), std::move(install_location));
     if (ec)
       return ec;
@@ -136,26 +169,34 @@ std::error_code DoInstall(const InstallContext &install_context) {
 
   std::filesystem::remove(package_file);
 
+  {
 #ifdef _WIN32
-  std::wstringstream ss;
-  ss << L"cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"" << exe_path.native() << L"\" & RMDIR /Q \""
-     << exe_path.parent_path().native() << L"\"";
-  std::wstring cmd = ss.str();
-  STARTUPINFO si = {sizeof(STARTUPINFO)};
-  PROCESS_INFORMATION pi = {};
-  ::CreateProcess(nullptr, cmd.data(), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
-  ::CloseHandle(pi.hThread);
-  ::CloseHandle(pi.hProcess);
+    tstringstream ss;
+    ss << _T("cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"") << exe_path.native() << _T("\" & RMDIR /Q \"")
+       << exe_path.parent_path().native() << _T("\"");
+    tstring cmd = ss.str();
+    STARTUPINFO si = {sizeof(STARTUPINFO)};
+    PROCESS_INFORMATION pi = {};
+    ::CreateProcess(nullptr, cmd.data(), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+    ::CloseHandle(pi.hThread);
+    ::CloseHandle(pi.hProcess);
 #else
-  std::filesystem::remove(exe_path);
+    std::filesystem::remove(exe_path);
 #endif
+  }
 
-  std::filesystem::path launch_path = install_location / install_context.launch_file;
-  std::filesystem::permissions(launch_path,
-                               std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
-                                   std::filesystem::perms::others_exec,
-                               std::filesystem::perm_options::add);
-  boost::process::spawn(launch_path.string(), boost::process::start_dir(launch_path.parent_path().string()));
+  {
+    std::filesystem::path launch_path = install_location / install_context->launch_file;
+    std::filesystem::permissions(launch_path,
+                                 std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
+                                     std::filesystem::perms::others_exec,
+                                 std::filesystem::perm_options::add);
+    tstringstream ss;
+    ss << launch_path.native();
+    ss << _T(" --" INSTALLER_ARGUMENT_NEW_VERSION);
+    tstring cmd = ss.str();
+    boost::process::spawn(cmd, boost::process::start_dir(launch_path.parent_path().native()));
+  }
 
   return {};
 }

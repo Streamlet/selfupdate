@@ -1,3 +1,4 @@
+#include "native_string.h"
 #include <system_error>
 
 namespace selfupdate {
@@ -36,22 +37,23 @@ std::error_category &selfupdate_category();
 
 std::error_code make_selfupdate_error(selfupdate_error_code error);
 
-extern const char *PACKAGEINFO_PACKAGE_FORMAT_ZIP;
+#define PACKAGEINFO_PACKAGE_FORMAT_ZIP "zip"
 
-extern const char *PACKAGEINFO_PACKAGE_HASH_ALGO_MD5;
-extern const char *PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1;
-extern const char *PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224;
-extern const char *PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256;
-extern const char *PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384;
-extern const char *PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512;
+#define PACKAGEINFO_PACKAGE_HASH_ALGO_MD5 "md5"
+#define PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1 "sha1"
+#define PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224 "sha224"
+#define PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256 "sha256"
+#define PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384 "sha384"
+#define PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512 "sha512"
 
-extern const char *PACKAGE_NAME_VERSION_SEP;
-extern const char *FILE_NAME_EXT_SEP;
+#define PACKAGE_NAME_VERSION_SEP "-"
+#define FILE_NAME_EXT_SEP "."
 
-extern const char *INSTALLER_ARGUMENT_UPDATE;
-extern const char *INSTALLER_ARGUMENT_WAIT_PID;
-extern const char *INSTALLER_ARGUMENT_SOURCE;
-extern const char *INSTALLER_ARGUMENT_TARGET;
-extern const char *INSTALLER_ARGUMENT_LAUNCH_FILE;
+#define INSTALLER_ARGUMENT_UPDATE "update"
+#define INSTALLER_ARGUMENT_WAIT_PID "wait-pid"
+#define INSTALLER_ARGUMENT_SOURCE "source"
+#define INSTALLER_ARGUMENT_TARGET "target"
+#define INSTALLER_ARGUMENT_LAUNCH_FILE "launch-file"
+#define INSTALLER_ARGUMENT_NEW_VERSION "new-versin"
 
 } // namespace selfupdate
