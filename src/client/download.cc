@@ -48,30 +48,34 @@ void WriteInteger(const std::filesystem::path &file, long long v) {
 
 const char *DOWNLOADING_FILE_SUFFIX = ".downloading";
 
-bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std::string, std::string> &hash) {
-  for (const auto &item : hash) {
+bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std::string, std::string> &hashes) {
+  for (const auto &item : hashes) {
+    std::string hash = item.second;
+    std::transform(hash.begin(), hash.end(), hash.begin(), [](unsigned char c) {
+      return std::tolower(c);
+    });
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_MD5) {
-      if (crypto::MD5(package_file) != item.second)
+      if (crypto::MD5(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1) {
-      if (crypto::SHA1(package_file) != item.second)
+      if (crypto::SHA1(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224) {
-      if (crypto::SHA224(package_file) != item.second)
+      if (crypto::SHA224(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256) {
-      if (crypto::SHA256(package_file) != item.second)
+      if (crypto::SHA256(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384) {
-      if (crypto::SHA384(package_file) != item.second)
+      if (crypto::SHA384(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
-      if (crypto::SHA512(package_file) != item.second)
+      if (crypto::SHA512(package_file) != hash)
         return false;
     }
   }
