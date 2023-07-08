@@ -55,27 +55,32 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
       return std::tolower(c);
     });
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_MD5) {
-      if (crypto::MD5(package_file) != hash)
+      if (crypto::MD5File(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1) {
-      if (crypto::SHA1(package_file) != hash)
+      if (crypto::SHA1File(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224) {
-      if (crypto::SHA224(package_file) != hash)
+#ifdef _WIN32
+      // WinCrypt API does not support sha224
+      return false;
+#else
+      if (crypto::SHA224File(package_file) != hash)
         return false;
+#endif
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256) {
-      if (crypto::SHA256(package_file) != hash)
+      if (crypto::SHA256File(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384) {
-      if (crypto::SHA384(package_file) != hash)
+      if (crypto::SHA384File(package_file) != hash)
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
-      if (crypto::SHA512(package_file) != hash)
+      if (crypto::SHA512File(package_file) != hash)
         return false;
     }
   }
