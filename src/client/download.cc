@@ -63,13 +63,8 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
         return false;
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224) {
-#ifdef _WIN32
-      // WinCrypt API does not support sha224
-      return false;
-#else
       if (crypto::SHA224File(package_file) != hash)
         return false;
-#endif
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256) {
       if (crypto::SHA256File(package_file) != hash)
