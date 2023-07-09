@@ -6,8 +6,8 @@ namespace selfupdate {
 
 struct InstallContext;
 
-const InstallContext *IsInstallMode(int argc, const char *const argv[]);
-const InstallContext *IsInstallMode(int argc, const wchar_t *const argv[]);
+const InstallContext *IsInstallMode(int argc, const char *argv[]);
+const InstallContext *IsInstallMode(int argc, const wchar_t *argv[]);
 #ifdef _WIN32
 const InstallContext *IsInstallMode(const char *cmdline);
 const InstallContext *IsInstallMode(const wchar_t *cmdline);

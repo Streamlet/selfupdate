@@ -122,8 +122,10 @@ def main():
     copy_files(dir)
     make_package(dir)
     process = run_server(dir)
-    test(dir)
-    process.kill()
+    try:
+        test(dir)
+    finally:
+        process.kill()
 
 
 if __name__ == '__main__':

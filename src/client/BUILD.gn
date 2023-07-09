@@ -13,12 +13,6 @@ static_library("selfupdate") {
     "query.cc",
   ]
 
-  if (is_win) {
-    libs = [ "libboost_program_options.lib" ]
-  } else {
-    libs = [ "boost_program_options" ]
-  }
-
   deps = [
     "../../thirdparty:boost",
     "../../thirdparty:loki",
@@ -37,12 +31,6 @@ static_library("installer") {
     "common.h",
     "installer.cc",
   ]
-
-  if (is_win) {
-    libs = [ "libboost_program_options.lib" ]
-  } else {
-    libs = [ "boost_program_options" ]
-  }
 
   deps = [
     "../../thirdparty:boost",

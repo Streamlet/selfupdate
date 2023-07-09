@@ -2,6 +2,9 @@
 #include <string>
 #include <string_view>
 
+#define __L(s) L##s
+#define _L(s) __L(s)
+
 #ifdef _WIN32
 
 #include <tchar.h>

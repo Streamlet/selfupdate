@@ -31,8 +31,8 @@ std::error_code Install(const PackageInfo &package_info,
                         std::filesystem::path installer_path = {},    // default to the executable path
                         std::filesystem::path install_location = {}); // default to the executable directory
 
-bool IsNewVersionFirstLaunched(int argc, const char *const argv[]);
-bool IsNewVersionFirstLaunched(int argc, const wchar_t *const argv[]);
+bool IsNewVersionFirstLaunched(int argc, const char *argv[]);
+bool IsNewVersionFirstLaunched(int argc, const wchar_t *argv[]);
 #ifdef _WIN32
 bool IsNewVersionFirstLaunched(const char *command_line);
 bool IsNewVersionFirstLaunched(const wchar_t *command_line);

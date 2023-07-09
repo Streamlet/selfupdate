@@ -4,7 +4,6 @@
 #include <selfupdate/selfupdate.h>
 
 int main(int argc, const char *argv[]) {
-
   const selfupdate::InstallContext *install_context = selfupdate::IsInstallMode(argc, argv);
   if (install_context != nullptr) {
     std::cout << "Installing..." << std::endl;
@@ -55,6 +54,7 @@ int main(int argc, const char *argv[]) {
     std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;
   }
+  std::cout << "Old client quitting." << std::endl;
 
   return 0;
 }
