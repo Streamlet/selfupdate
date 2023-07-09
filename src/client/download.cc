@@ -2,9 +2,9 @@
 #include "../utility/crypto.h"
 #include "../utility/http_client.h"
 #include "common.h"
+#include <boost/scope_exit.hpp>
 #include <cstdio>
 #include <filesystem>
-#include <loki/ScopeGuard.h>
 #include <sstream>
 
 #ifdef _WIN32
@@ -109,62 +109,65 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
   std::filesystem::path package_downloading_file = cache_dir / (package_file_name + DOWNLOADING_FILE_SUFFIX);
   long long downloaded_size = ReadInteger(package_downloading_file);
 
+  {
 #ifdef _MSC_VER
-  FILE *f = _wfopen(package_file.c_str(), L"wb");
+    FILE *f = _wfopen(package_file.c_str(), L"wb");
 #else
-  FILE *f = fopen(package_file.c_str(), "wb");
+    FILE *f = fopen(package_file.c_str(), "wb");
 #endif
-  auto sgCloseFile = ::Loki::MakeGuard(fclose, f);
-  fseek(f, 0, SEEK_END);
-  long long offset = ftell(f);
-  if (offset == package_info.package_size && downloaded_size < 0 &&
-      VerifyPackage(package_file, package_info.package_hash)) {
-    return {};
+    BOOST_SCOPE_EXIT(f) {
+      fclose(f);
+    }
+    BOOST_SCOPE_EXIT_END
+    fseek(f, 0, SEEK_END);
+    long long offset = ftell(f);
+    if (offset == package_info.package_size && downloaded_size < 0 &&
+        VerifyPackage(package_file, package_info.package_hash)) {
+      return {};
+    }
+
+    if (downloaded_size > 0 && offset > downloaded_size) {
+      fseek(f, downloaded_size, SEEK_SET);
+    } else {
+      fseek(f, 0, SEEK_SET);
+      downloaded_size = 0;
+    }
+    HttpClient http_client(SELFUPDATE_USER_AGENT);
+    unsigned status = 0;
+    HttpClient::ResponseHeader response_header;
+    ec = http_client.Head(package_info.package_url, {}, &status, &response_header);
+    if (ec)
+      return ec;
+
+    long long total_size = package_info.package_size;
+    auto it = response_header.find("Content-Length");
+    if (it != response_header.end()) {
+      std::string content_length = it->second;
+      total_size = atoll(content_length.c_str());
+    }
+
+    if (total_size != package_info.package_size)
+      return make_selfupdate_error(SUE_PackageSizeError);
+
+    std::stringstream range_expr;
+    range_expr << "bytes=";
+    range_expr << downloaded_size;
+    range_expr << "-";
+    HttpClient::RequestHeader request_header = {
+        {"Range", range_expr.str()}
+    };
+    ec = http_client.Get(package_info.package_url, request_header, &status, nullptr,
+                         [&](const void *data, size_t length) {
+                           fwrite(data, 1, length, f);
+                           fflush(f);
+                           downloaded_size += length;
+                           WriteInteger(package_downloading_file, downloaded_size);
+                           if (download_progress_monitor != nullptr)
+                             download_progress_monitor(downloaded_size, total_size);
+                         });
+    if (ec)
+      return ec;
   }
-
-  if (downloaded_size > 0 && offset > downloaded_size) {
-    fseek(f, downloaded_size, SEEK_SET);
-  } else {
-    fseek(f, 0, SEEK_SET);
-    downloaded_size = 0;
-  }
-  HttpClient http_client(SELFUPDATE_USER_AGENT);
-  unsigned status = 0;
-  HttpClient::ResponseHeader response_header;
-  ec = http_client.Head(package_info.package_url, {}, &status, &response_header);
-  if (ec)
-    return ec;
-
-  long long total_size = package_info.package_size;
-  auto it = response_header.find("Content-Length");
-  if (it != response_header.end()) {
-    std::string content_length = it->second;
-    total_size = atoll(content_length.c_str());
-  }
-
-  if (total_size != package_info.package_size)
-    return make_selfupdate_error(SUE_PackageSizeError);
-
-  std::stringstream range_expr;
-  range_expr << "bytes=";
-  range_expr << downloaded_size;
-  range_expr << "-";
-  HttpClient::RequestHeader request_header = {
-      {"Range", range_expr.str()}
-  };
-  ec =
-      http_client.Get(package_info.package_url, request_header, &status, nullptr, [&](const void *data, size_t length) {
-        fwrite(data, 1, length, f);
-        fflush(f);
-        downloaded_size += length;
-        WriteInteger(package_downloading_file, downloaded_size);
-        if (download_progress_monitor != nullptr)
-          download_progress_monitor(downloaded_size, total_size);
-      });
-  if (ec)
-    return ec;
-  fclose(f);
-  sgCloseFile.Dismiss();
 
   // if (downloaded_size != total_size) {
   //   return make_selfupdate_error(SUE_PackageSizeError);

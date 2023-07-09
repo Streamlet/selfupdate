@@ -5,9 +5,9 @@
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process.hpp>
 #include <boost/program_options.hpp>
+#include <boost/scope_exit.hpp>
 #include <chrono>
 #include <filesystem>
-#include <loki/ScopeGuard.h>
 #include <sstream>
 #include <stdio.h>
 #include <zlibwrap/zlibwrap.h>
