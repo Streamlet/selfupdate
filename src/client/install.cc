@@ -23,14 +23,14 @@ std::error_code Install(const PackageInfo &package_info,
   if (!std::filesystem::exists(package_file, ec))
     return ec;
 
-  auto exe_path = std::filesystem::path(boost ::dll::program_location().string());
-  auto exe_dir = exe_path.parent_path();
-  auto exe_file = exe_path.filename();
+  std::filesystem::path exe_path = boost::dll::program_location();
+  std::filesystem::path exe_dir = exe_path.parent_path();
+  std::filesystem::path exe_file = exe_path.filename();
 
   if (installer_path.empty())
-    installer_path = boost::dll::program_location().string();
+    installer_path = boost::dll::program_location();
   if (install_location.empty())
-    install_location = exe_dir.c_str();
+    install_location = exe_dir;
 
   std::filesystem::path copied_installer_path = package_file.parent_path() / installer_path.filename();
   std::filesystem::copy_file(installer_path, copied_installer_path, std::filesystem::copy_options::overwrite_existing,

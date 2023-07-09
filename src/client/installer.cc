@@ -141,7 +141,7 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
 
 std::error_code DoInstall(const InstallContext *install_context) {
   auto install_context_ptr = std::unique_ptr<const InstallContext>(install_context);
-  auto exe_path = std::filesystem::path(boost ::dll::program_location().native());
+  auto exe_path = boost ::dll::program_location();
   if (exe_path.native().find(install_context->target) == 0)
     return make_selfupdate_error(SUE_RunInstallerPositionError);
 

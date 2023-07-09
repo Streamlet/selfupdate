@@ -1,4 +1,3 @@
-#include <boost/dll/runtime_symbol_info.hpp>
 #include <iostream>
 #include <math.h>
 #include <selfupdate/installer.h>

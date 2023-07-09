@@ -16,10 +16,7 @@ static_library("selfupdate") {
   if (is_win) {
     libs = [ "libboost_program_options.lib" ]
   } else {
-    libs = [
-      "boost_program_options",
-      "boost_filesystem",
-    ]
+    libs = [ "boost_program_options" ]
   }
 
   deps = [
@@ -44,10 +41,7 @@ static_library("installer") {
   if (is_win) {
     libs = [ "libboost_program_options.lib" ]
   } else {
-    libs = [
-      "boost_program_options",
-      "boost_filesystem",
-    ]
+    libs = [ "boost_program_options" ]
   }
 
   deps = [
