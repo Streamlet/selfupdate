@@ -101,7 +101,7 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
   install_location_new += INSTALL_LOCATION_NEW_SUFFIX;
   std::filesystem::remove_all(install_location_new);
 
-  if (!zlibwrap::ZipExtract(package_file.string().c_str(), install_location_new.string().c_str()))
+  if (!zlibwrap::ZipExtract(package_file.c_str(), install_location_new.c_str()))
     return make_selfupdate_error(SUE_PackageExtractError);
 
   std::error_code ec;
