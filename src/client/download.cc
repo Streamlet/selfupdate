@@ -52,7 +52,7 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
   for (const auto &item : hashes) {
     std::string hash = item.second;
     std::transform(hash.begin(), hash.end(), hash.begin(), [](unsigned char c) {
-      return std::tolower(c);
+      return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c;
     });
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_MD5) {
       if (crypto::MD5File(package_file) != hash)

@@ -13,6 +13,8 @@
 #include <zlibwrap/zlibwrap.h>
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#include <unistd.h>
 #endif
 
 namespace selfupdate {
@@ -109,9 +111,9 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
     std::filesystem::rename(install_location, install_location_old, ec);
     if (ec) {
 #if _WIN32
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+      ::Sleep(1000);
 #else
-      break;
+      ::sleep(1);
 #endif
     }
   }
