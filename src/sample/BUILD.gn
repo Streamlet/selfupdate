@@ -1,5 +1,8 @@
 executable("old_client") {
   testonly = true
+  if (is_win) {
+    configs += [ "../../build/config/win:console_subsystem" ]
+  }
 
   include_dirs = [ "../include" ]
 
@@ -14,8 +17,11 @@ executable("old_client") {
 
 executable("new_client") {
   testonly = true
-
+  if (is_win) {
+    configs += [ "../../build/config/win:console_subsystem" ]
+  }
   sources = [ "new_client.cc" ]
+
   deps = [
     "../../thirdparty:boost",
     "../client:selfupdate",
