@@ -19,7 +19,7 @@ int main(int argc, const char *argv[]) {
 
   std::cout << "Step 1: query package info" << std::endl;
   selfupdate::PackageInfo package_info;
-  std::error_code ec = selfupdate::Query("http://localhost:8080/sample_package/1.0", "", package_info);
+  std::error_code ec = selfupdate::Query("http://localhost:8080/sample_package/1.0", {}, "", package_info);
   if (ec) {
     std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;

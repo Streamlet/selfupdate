@@ -21,7 +21,10 @@ struct PackageInfo {
   std::string update_description;
 };
 
-std::error_code Query(const std::string &query_url, const std::string &query_body, PackageInfo &package_info);
+std::error_code Query(const std::string &query_url,
+                      const std::multimap<std::string, std::string> &headers,
+                      const std::string &query_body,
+                      PackageInfo &package_info);
 
 typedef std::function<void(unsigned long long downloaded_bytes, unsigned long long total_bytes)>
     DownloadProgressMonitor;
