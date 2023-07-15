@@ -8,10 +8,12 @@
 #include <boost/scope_exit.hpp>
 #include <chrono>
 #include <filesystem>
+#include <locale>
 #include <sstream>
 #include <stdio.h>
 #include <zlibwrap/zlibwrap.h>
 #ifdef _WIN32
+#include "../utility/encoding.h"
 #include <Windows.h>
 #else
 #include <unistd.h>
@@ -35,13 +37,16 @@ const InstallContext *IsInstallMode(boost::program_options::basic_command_line_p
   desc.add_options()
     (INSTALLER_ARGUMENT_UPDATE, "")
     (INSTALLER_ARGUMENT_WAIT_PID, boost::program_options::value<int>(), "")
-    (INSTALLER_ARGUMENT_SOURCE, boost::program_options::value<std::filesystem::path>(),"")
-    (INSTALLER_ARGUMENT_TARGET, boost::program_options::value<std::filesystem::path>(), "")
-    (INSTALLER_ARGUMENT_LAUNCH_FILE, boost::program_options::value<std::filesystem::path>(), "");
+    (INSTALLER_ARGUMENT_SOURCE, boost::program_options::value<std::string>(),"")
+    (INSTALLER_ARGUMENT_TARGET, boost::program_options::value<std::string>(), "")
+    (INSTALLER_ARGUMENT_LAUNCH_FILE, boost::program_options::value<std::string>(), "");
   // clang-format on
   boost::program_options::variables_map vm;
   try {
+    auto locale = std::locale();
+    std::locale::global(std::locale(""));
     boost::program_options::store(parser.options(desc).run(), vm);
+    std::locale::global(locale);
   } catch (boost::program_options::unknown_option e) {
     return nullptr;
   } catch (boost::program_options::invalid_option_value e) {
@@ -57,13 +62,29 @@ const InstallContext *IsInstallMode(boost::program_options::basic_command_line_p
     return nullptr;
   }
 
+  int wait_pid = vm[INSTALLER_ARGUMENT_WAIT_PID].as<int>();
+  std::string source = vm[INSTALLER_ARGUMENT_SOURCE].as<std::string>();
+  std::string target = vm[INSTALLER_ARGUMENT_TARGET].as<std::string>();
+  std::string launch_file = vm[INSTALLER_ARGUMENT_LAUNCH_FILE].as<std::string>();
+
+  auto is_quote = [](char ch) {
+    return ch == '"';
+  };
+  boost::algorithm::trim_if(source, is_quote);
+  boost::algorithm::trim_if(target, is_quote);
+  boost::algorithm::trim_if(launch_file, is_quote);
+
   InstallContext *install_context = new InstallContext;
-
-  install_context->wait_pid = vm[INSTALLER_ARGUMENT_WAIT_PID].as<int>();
-  install_context->source = vm[INSTALLER_ARGUMENT_SOURCE].as<std::filesystem::path>();
-  install_context->target = vm[INSTALLER_ARGUMENT_TARGET].as<std::filesystem::path>();
-  install_context->launch_file = vm[INSTALLER_ARGUMENT_LAUNCH_FILE].as<std::filesystem::path>();
-
+  install_context->wait_pid = wait_pid;
+#ifdef _WIN32
+  install_context->source = encoding::UTF8ToUCS2(source);
+  install_context->target = encoding::UTF8ToUCS2(target);
+  install_context->launch_file = encoding::UTF8ToUCS2(launch_file);
+#else
+  install_context->source = source;
+  install_context->target = target;
+  install_context->launch_file = launch_file;
+#endif
   return install_context;
 }
 

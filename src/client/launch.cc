@@ -14,7 +14,10 @@ bool IsNewVersionFirstLaunched(boost::program_options::basic_command_line_parser
   // clang-format on
   boost::program_options::variables_map vm;
   try {
+    auto locale = std::locale();
+    std::locale::global(std::locale(""));
     boost::program_options::store(parser.options(desc).run(), vm);
+    std::locale::global(locale);
   } catch (boost::program_options::unknown_option e) {
     return false;
   } catch (boost::program_options::invalid_option_value e) {
