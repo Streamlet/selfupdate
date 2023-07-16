@@ -2,15 +2,19 @@
 
 #include <system_error>
 
+#ifdef _WIN32
+#include <tchar.h>
+#endif
+
 namespace selfupdate {
 
 struct InstallContext;
 
-const InstallContext *IsInstallMode(int argc, const char *argv[]);
-const InstallContext *IsInstallMode(int argc, const wchar_t *argv[]);
 #ifdef _WIN32
-const InstallContext *IsInstallMode(const char *cmdline);
-const InstallContext *IsInstallMode(const wchar_t *cmdline);
+const InstallContext *IsInstallMode(int argc, const TCHAR *argv[]);
+const InstallContext *IsInstallMode(const TCHAR *cmdline);
+#else
+const InstallContext *IsInstallMode(int argc, const char *argv[]);
 #endif
 
 std::error_code DoInstall(const InstallContext *install_context);

@@ -1,10 +1,10 @@
 #include "../include/selfupdate/installer.h"
+#include "../utility/cmdline_options.h"
 #include "../utility/native_string.h"
 #include "common.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process.hpp>
-#include <boost/program_options.hpp>
 #include <chrono>
 #include <filesystem>
 #include <locale>
@@ -29,45 +29,22 @@ struct InstallContext {
 
 namespace {
 
-template <typename charT>
-const InstallContext *IsInstallMode(boost::program_options::basic_command_line_parser<charT> parser) {
-  boost::program_options::options_description desc;
-  // clang-format off
-  desc.add_options()
-    (INSTALLER_ARGUMENT_UPDATE, "")
-    (INSTALLER_ARGUMENT_WAIT_PID, boost::program_options::value<int>(), "")
-    (INSTALLER_ARGUMENT_SOURCE, boost::program_options::value<std::string>(),"")
-    (INSTALLER_ARGUMENT_TARGET, boost::program_options::value<std::string>(), "")
-    (INSTALLER_ARGUMENT_LAUNCH_FILE, boost::program_options::value<std::string>(), "");
-  // clang-format on
-  boost::program_options::variables_map vm;
-  try {
-    auto locale = std::locale();
-    std::locale::global(std::locale(""));
-    boost::program_options::store(parser.options(desc).run(), vm);
-    std::locale::global(locale);
-  } catch (boost::program_options::unknown_option e) {
-    return nullptr;
-  } catch (boost::program_options::invalid_option_value e) {
+const InstallContext *IsInstallMode(const cmdline_options::ParsedOption &options) {
+  if (!options.has(_T(INSTALLER_ARGUMENT_UPDATE))) {
     return nullptr;
   }
-  boost::program_options::notify(vm);
-
-  if (vm.count(INSTALLER_ARGUMENT_UPDATE) <= 0) {
-    return nullptr;
-  }
-  if (vm.count(INSTALLER_ARGUMENT_WAIT_PID) <= 0 || vm.count(INSTALLER_ARGUMENT_SOURCE) <= 0 ||
-      vm.count(INSTALLER_ARGUMENT_TARGET) <= 0 || vm.count(INSTALLER_ARGUMENT_LAUNCH_FILE) <= 0) {
+  if (!options.has(_T(INSTALLER_ARGUMENT_WAIT_PID)) || !options.has(_T(INSTALLER_ARGUMENT_SOURCE)) ||
+      !options.has(_T(INSTALLER_ARGUMENT_TARGET)) || !options.has(_T(INSTALLER_ARGUMENT_LAUNCH_FILE))) {
     return nullptr;
   }
 
-  int wait_pid = vm[INSTALLER_ARGUMENT_WAIT_PID].as<int>();
-  std::string source = vm[INSTALLER_ARGUMENT_SOURCE].as<std::string>();
-  std::string target = vm[INSTALLER_ARGUMENT_TARGET].as<std::string>();
-  std::string launch_file = vm[INSTALLER_ARGUMENT_LAUNCH_FILE].as<std::string>();
+  int wait_pid = options.get_as<int>(_T(INSTALLER_ARGUMENT_WAIT_PID));
+  native_string source = options.get(_T(INSTALLER_ARGUMENT_SOURCE));
+  native_string target = options.get(_T(INSTALLER_ARGUMENT_TARGET));
+  native_string launch_file = options.get(_T(INSTALLER_ARGUMENT_LAUNCH_FILE));
 
-  auto is_quote = [](char ch) {
-    return ch == '"';
+  auto is_quote = [](TCHAR ch) {
+    return ch == _T('"');
   };
   boost::algorithm::trim_if(source, is_quote);
   boost::algorithm::trim_if(target, is_quote);
@@ -75,36 +52,21 @@ const InstallContext *IsInstallMode(boost::program_options::basic_command_line_p
 
   InstallContext *install_context = new InstallContext;
   install_context->wait_pid = wait_pid;
-#ifdef _WIN32
-  install_context->source = encoding::UTF8ToUCS2(source);
-  install_context->target = encoding::UTF8ToUCS2(target);
-  install_context->launch_file = encoding::UTF8ToUCS2(launch_file);
-#else
   install_context->source = source;
   install_context->target = target;
   install_context->launch_file = launch_file;
-#endif
   return install_context;
 }
 
 } // namespace
 
-const InstallContext *IsInstallMode(int argc, const char *argv[]) {
-  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser<char>(argc, argv)));
-}
-
-const InstallContext *IsInstallMode(int argc, const wchar_t *argv[]) {
-  return std::move(IsInstallMode(boost::program_options::basic_command_line_parser<wchar_t>(argc, argv)));
+const InstallContext *IsInstallMode(int argc, const TCHAR *argv[]) {
+  return std::move(IsInstallMode(cmdline_options::parse(argc, argv)));
 }
 
 #ifdef _WIN32
-const InstallContext *IsInstallMode(const char *command_line) {
-  return std::move(IsInstallMode(
-      boost::program_options::basic_command_line_parser(boost::program_options::split_winmain(command_line))));
-}
-const InstallContext *IsInstallMode(const wchar_t *command_line) {
-  return std::move(IsInstallMode(
-      boost::program_options::basic_command_line_parser(boost::program_options::split_winmain(command_line))));
+const InstallContext *IsInstallMode(const TCHAR *command_line) {
+  return std::move(IsInstallMode(cmdline_options::parse(command_line)));
 }
 #endif
 

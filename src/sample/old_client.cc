@@ -1,9 +1,10 @@
+#include "../utility/native_string.h"
 #include <iostream>
 #include <math.h>
 #include <selfupdate/installer.h>
 #include <selfupdate/selfupdate.h>
 
-int main(int argc, const char *argv[]) {
+int _tmain(int argc, const TCHAR *argv[]) {
   const selfupdate::InstallContext *install_context = selfupdate::IsInstallMode(argc, argv);
   if (install_context != nullptr) {
     std::cout << "Installing..." << std::endl;
