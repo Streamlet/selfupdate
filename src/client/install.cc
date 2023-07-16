@@ -38,14 +38,14 @@ std::error_code Install(const PackageInfo &package_info,
     return ec;
 
   int pid = boost::this_process::get_id();
-  tstringstream ss;
+  native_string_stream ss;
   ss << copied_installer_path.native();
   ss << _T(" --" INSTALLER_ARGUMENT_UPDATE);
   ss << _T(" --" INSTALLER_ARGUMENT_WAIT_PID) << _T("=") << pid;
   ss << _T(" --" INSTALLER_ARGUMENT_SOURCE) << _T("=\"") << package_file.native() << _T("\"");
   ss << _T(" --" INSTALLER_ARGUMENT_TARGET) << _T("=\"") << install_location.native() << _T("\"");
   ss << _T(" --" INSTALLER_ARGUMENT_LAUNCH_FILE) << _T("=\"") << exe_file.native() << _T("\"");
-  tstring cmd = ss.str();
+  native_string cmd = ss.str();
   boost::process::spawn(cmd, boost::process::start_dir(copied_installer_path.parent_path().native()));
   return {};
 }

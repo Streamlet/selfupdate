@@ -1,6 +1,6 @@
 #include "../include/selfupdate/installer.h"
+#include "../utility/native_string.h"
 #include "common.h"
-#include "native_string.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process.hpp>
@@ -180,7 +180,7 @@ std::error_code DoInstall(const InstallContext *install_context) {
   std::filesystem::path package_file = install_context->source;
   std::filesystem::path install_location = install_context->target;
 
-  tstring package_format = package_file.extension().native();
+  native_string package_format = package_file.extension().native();
   if (package_format == _T(FILE_NAME_EXT_SEP PACKAGEINFO_PACKAGE_FORMAT_ZIP)) {
     std::error_code ec = InstallZipPackage(std::move(package_file), std::move(install_location));
     if (ec)
@@ -193,10 +193,10 @@ std::error_code DoInstall(const InstallContext *install_context) {
 
   {
 #ifdef _WIN32
-    tstringstream ss;
+    native_string_stream ss;
     ss << _T("cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"") << exe_path.native() << _T("\" & RMDIR /Q \"")
        << exe_path.parent_path().native() << _T("\"");
-    tstring cmd = ss.str();
+    native_string cmd = ss.str();
     STARTUPINFO si = {sizeof(STARTUPINFO)};
     PROCESS_INFORMATION pi = {};
     ::CreateProcess(nullptr, cmd.data(), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
@@ -213,10 +213,10 @@ std::error_code DoInstall(const InstallContext *install_context) {
                                  std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
                                      std::filesystem::perms::others_exec,
                                  std::filesystem::perm_options::add);
-    tstringstream ss;
+    native_string_stream ss;
     ss << launch_path.native();
     ss << _T(" --" INSTALLER_ARGUMENT_NEW_VERSION);
-    tstring cmd = ss.str();
+    native_string cmd = ss.str();
     boost::process::spawn(cmd, boost::process::start_dir(launch_path.parent_path().native()));
   }
 
