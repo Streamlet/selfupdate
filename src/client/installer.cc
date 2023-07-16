@@ -1,9 +1,8 @@
 #include "../include/selfupdate/installer.h"
 #include "../utility/cmdline_options.h"
 #include "../utility/native_string.h"
+#include "../utility/process_util.h"
 #include "common.h"
-#include <boost/dll/runtime_symbol_info.hpp>
-#include <boost/process.hpp>
 #include <chrono>
 #include <filesystem>
 #include <locale>
@@ -42,12 +41,14 @@ const InstallContext *IsInstallMode(const cmdline_options::ParsedOption &options
   native_string target = options.get(_T(INSTALLER_ARGUMENT_TARGET));
   native_string launch_file = options.get(_T(INSTALLER_ARGUMENT_LAUNCH_FILE));
 
-  auto is_quote = [](TCHAR ch) {
-    return ch == _T('"');
+  auto trim_quote = [](native_string &s) -> native_string & {
+    s.erase(0, s.find_first_not_of(_T('"'), 0));
+    s.erase(s.find_last_not_of(_T('"')) + 1);
+    return s;
   };
-  boost::algorithm::trim_if(source, is_quote);
-  boost::algorithm::trim_if(target, is_quote);
-  boost::algorithm::trim_if(launch_file, is_quote);
+  trim_quote(source);
+  trim_quote(target);
+  trim_quote(launch_file);
 
   InstallContext *install_context = new InstallContext;
   install_context->wait_pid = wait_pid;
@@ -73,7 +74,7 @@ namespace {
 
 const char *INSTALL_LOCATION_OLD_SUFFIX = ".old";
 const char *INSTALL_LOCATION_NEW_SUFFIX = ".new";
-const int INSTALL_WAIT_FOR_MAIN_PROCESS = 10;
+const int INSTALL_WAIT_FOR_MAIN_PROCESS = 10000;
 
 std::error_code InstallZipPackage(const std::filesystem::path &package_file,
                                   const std::filesystem::path &install_location) {
@@ -124,18 +125,12 @@ std::error_code InstallZipPackage(const std::filesystem::path &package_file,
 
 std::error_code DoInstall(const InstallContext *install_context) {
   auto install_context_ptr = std::unique_ptr<const InstallContext>(install_context);
-  auto exe_path = boost ::dll::program_location();
-  if (exe_path.native().find(install_context->target) == 0)
+  auto exe_path = process_util::GetExecutablePath();
+  if (exe_path.find(install_context->target) == 0)
     return make_selfupdate_error(SUE_RunInstallerPositionError);
 
-  try {
-    boost::process::child main_process(static_cast<boost::process::pid_t>(install_context->wait_pid));
-    if (main_process.valid() && main_process.running()) {
-      if (!main_process.wait_for(std::chrono::seconds(INSTALL_WAIT_FOR_MAIN_PROCESS))) {
-        main_process.terminate();
-      }
-    }
-  } catch (boost::process::process_error e) {
+  if (!process_util::WaitProcess(install_context->wait_pid, INSTALL_WAIT_FOR_MAIN_PROCESS)) {
+    process_util::KillProcess(install_context->wait_pid);
   }
 
   std::filesystem::path package_file = install_context->source;
@@ -155,8 +150,8 @@ std::error_code DoInstall(const InstallContext *install_context) {
   {
 #ifdef _WIN32
     native_string_stream ss;
-    ss << _T("cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"") << exe_path.native() << _T("\" & RMDIR /Q \"")
-       << exe_path.parent_path().native() << _T("\"");
+    ss << _T("cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"") << exe_path << _T("\" & RMDIR /Q \"")
+       << std::filesystem::path(exe_path).parent_path().native() << _T("\"");
     native_string cmd = ss.str();
     STARTUPINFO si = {sizeof(STARTUPINFO)};
     PROCESS_INFORMATION pi = {};
@@ -174,11 +169,13 @@ std::error_code DoInstall(const InstallContext *install_context) {
                                  std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
                                      std::filesystem::perms::others_exec,
                                  std::filesystem::perm_options::add);
-    native_string_stream ss;
-    ss << launch_path.native();
-    ss << _T(" --" INSTALLER_ARGUMENT_NEW_VERSION);
-    native_string cmd = ss.str();
-    boost::process::spawn(cmd, boost::process::start_dir(launch_path.parent_path().native()));
+    long pid = process_util::StartProcess(launch_path.native(),
+                                          {
+                                              _T("--" INSTALLER_ARGUMENT_NEW_VERSION),
+                                          },
+                                          launch_path.parent_path().native());
+    if (pid == 0)
+      return make_selfupdate_error(SUE_RunNewVersionError);
   }
 
   return {};

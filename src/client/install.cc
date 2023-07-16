@@ -1,7 +1,6 @@
 #include "../include/selfupdate/selfupdate.h"
+#include "../utility/process_util.h"
 #include "common.h"
-#include <boost/dll/runtime_symbol_info.hpp>
-#include <boost/process.hpp>
 #include <filesystem>
 #include <sstream>
 
@@ -21,12 +20,12 @@ std::error_code Install(const PackageInfo &package_info,
   if (!std::filesystem::exists(package_file, ec))
     return ec;
 
-  std::filesystem::path exe_path = boost::dll::program_location();
+  std::filesystem::path exe_path = process_util::GetExecutablePath();
   std::filesystem::path exe_dir = exe_path.parent_path();
   std::filesystem::path exe_file = exe_path.filename();
 
   if (installer_path.empty())
-    installer_path = boost::dll::program_location();
+    installer_path = exe_path;
   if (install_location.empty())
     install_location = exe_dir;
 
@@ -36,16 +35,25 @@ std::error_code Install(const PackageInfo &package_info,
   if (ec)
     return ec;
 
-  int pid = boost::this_process::get_id();
+  long pid = process_util::GetPid();
   native_string_stream ss;
-  ss << copied_installer_path.native();
-  ss << _T(" --" INSTALLER_ARGUMENT_UPDATE);
-  ss << _T(" --" INSTALLER_ARGUMENT_WAIT_PID) << _T("=") << pid;
-  ss << _T(" --" INSTALLER_ARGUMENT_SOURCE) << _T("=\"") << package_file.native() << _T("\"");
-  ss << _T(" --" INSTALLER_ARGUMENT_TARGET) << _T("=\"") << install_location.native() << _T("\"");
-  ss << _T(" --" INSTALLER_ARGUMENT_LAUNCH_FILE) << _T("=\"") << exe_file.native() << _T("\"");
-  native_string cmd = ss.str();
-  boost::process::spawn(cmd, boost::process::start_dir(copied_installer_path.parent_path().native()));
+  ss << _T("--" INSTALLER_ARGUMENT_WAIT_PID) << _T("=") << pid;
+  long installer_pid = process_util::StartProcess(copied_installer_path.native(),
+                                                  {
+                                                      _T("--" INSTALLER_ARGUMENT_UPDATE),
+                                                      _T("--" INSTALLER_ARGUMENT_WAIT_PID),
+                                                      to_native_string(pid),
+                                                      _T("--" INSTALLER_ARGUMENT_SOURCE),
+                                                      package_file.native(),
+                                                      _T("--" INSTALLER_ARGUMENT_TARGET),
+                                                      install_location.native(),
+                                                      _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE),
+                                                      exe_file.native(),
+                                                  },
+                                                  copied_installer_path.parent_path().native());
+  if (installer_pid == 0)
+    return make_selfupdate_error(SUE_RunInstallerError);
+
   return {};
 }
 
