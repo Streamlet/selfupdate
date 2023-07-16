@@ -2,7 +2,6 @@
 #include "common.h"
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process.hpp>
-#include <boost/process/environment.hpp>
 #include <filesystem>
 #include <sstream>
 
