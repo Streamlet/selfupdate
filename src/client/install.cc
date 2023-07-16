@@ -3,7 +3,6 @@
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process.hpp>
 #include <boost/process/environment.hpp>
-#include <boost/scope_exit.hpp>
 #include <filesystem>
 #include <sstream>
 

@@ -21,6 +21,7 @@ static_library("selfupdate") {
 
   deps = [
     "../../thirdparty:boost",
+    "../../thirdparty:loki",
     "../utility:utility",
   ]
 }
@@ -44,6 +45,7 @@ static_library("installer") {
 
   deps = [
     "../../thirdparty:boost",
+    "../../thirdparty:loki",
     "../../thirdparty:zlibwrap",
     "../utility:utility",
   ]

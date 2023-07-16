@@ -2,9 +2,9 @@
 #include "../utility/crypto.h"
 #include "../utility/http_client.h"
 #include "common.h"
-#include <boost/scope_exit.hpp>
 #include <cstdio>
 #include <filesystem>
+#include <loki/ScopeGuard.h>
 #include <sstream>
 
 #ifdef _WIN32
@@ -115,10 +115,7 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
 #else
     FILE *f = fopen(package_file.c_str(), "wb");
 #endif
-    BOOST_SCOPE_EXIT(f) {
-      fclose(f);
-    }
-    BOOST_SCOPE_EXIT_END
+    LOKI_ON_BLOCK_EXIT(fclose, f);
     fseek(f, 0, SEEK_END);
     long long offset = ftell(f);
     if (offset == package_info.package_size && downloaded_size < 0 &&
