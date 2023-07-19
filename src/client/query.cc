@@ -1,7 +1,12 @@
 #include "../include/selfupdate/selfupdate.h"
 #include "../utility/http_client.h"
 #include "common.h"
-#include <boost/json/src.hpp>
+#include <rapidjson/document.h>
+
+#ifndef _WIN32
+#include <strings.h>
+#define strnicmp strncasecmp
+#endif
 
 namespace selfupdate {
 
@@ -37,67 +42,66 @@ std::error_code Query(const std::string &query_url,
   if (ec || status != 200)
     return ec;
 
-  boost::json::value jv = boost::json::parse(response, ec);
-  if (ec)
-    return ec;
-  if (!jv.is_object())
+  rapidjson::Document doc;
+  doc.Parse<rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag | rapidjson::kParseNanAndInfFlag>(
+      response);
+  if (doc.HasParseError())
     return make_selfupdate_error(SUE_PackageInfoFormatError);
-  boost::json::object doc = jv.as_object();
-  auto package_name = doc.find(PACKAGEINFO_PACKAGE_NAME);
-  auto has_new_version = doc.find(PACKAGEINFO_HAS_NEW_VERSION);
-  if (package_name == doc.end() || !package_name->value().is_string() || has_new_version == doc.end() ||
-      !has_new_version->value().is_bool()) {
+  if (!doc.HasMember(PACKAGEINFO_PACKAGE_NAME) || !doc[PACKAGEINFO_PACKAGE_NAME].IsString() ||
+      !doc.HasMember(PACKAGEINFO_HAS_NEW_VERSION) || !doc[PACKAGEINFO_HAS_NEW_VERSION].IsBool()) {
     return make_selfupdate_error(SUE_PackageInfoFormatError);
   }
-  package_info.package_name = package_name->value().as_string();
-  package_info.has_new_version = has_new_version->value().as_bool();
+  package_info.package_name.assign(doc[PACKAGEINFO_PACKAGE_NAME].GetString(),
+                                   doc[PACKAGEINFO_PACKAGE_NAME].GetStringLength());
+  package_info.has_new_version = doc[PACKAGEINFO_HAS_NEW_VERSION].GetBool();
   if (!package_info.has_new_version)
     return {};
 
-  auto package_version = doc.find(PACKAGEINFO_PACKAGE_VERSION);
-  auto force_update = doc.find(PACKAGEINFO_FORCE_UPDATE);
-  auto package_url = doc.find(PACKAGEINFO_PACKAGE_URL);
-  auto package_size = doc.find(PACKAGEINFO_PACKAGE_SIZE);
-  auto package_format = doc.find(PACKAGEINFO_PACKAGE_FORMAT);
-  auto package_hash = doc.find(PACKAGEINFO_PACKAGE_HASH);
-  auto update_title = doc.find(PACKAGEINFO_UPDATE_TITLE);
-  auto update_description = doc.find(PACKAGEINFO_UPDATE_DESCRIPTION);
-  if ((package_version == doc.end() || !package_version->value().is_string()) ||
-      (force_update != doc.end() && !force_update->value().is_bool()) ||
-      (package_url == doc.end() || !package_url->value().is_string()) ||
-      (package_size == doc.end() || !package_size->value().is_int64()) ||
-      (package_format == doc.end() || !package_format->value().is_string()) ||
-      (package_hash == doc.end() || !package_hash->value().is_object()) ||
-      (update_title == doc.end() || !update_title->value().is_string()) ||
-      (update_description == doc.end() || !update_description->value().is_string())) {
+  if (!doc.HasMember(PACKAGEINFO_PACKAGE_VERSION) || !doc[PACKAGEINFO_PACKAGE_VERSION].IsString() ||
+      (doc.HasMember(PACKAGEINFO_FORCE_UPDATE) && !doc[PACKAGEINFO_FORCE_UPDATE].IsBool()) ||
+      !doc.HasMember(PACKAGEINFO_PACKAGE_URL) || !doc[PACKAGEINFO_PACKAGE_URL].IsString() ||
+      !doc.HasMember(PACKAGEINFO_PACKAGE_SIZE) || !doc[PACKAGEINFO_PACKAGE_SIZE].IsUint64() ||
+      !doc.HasMember(PACKAGEINFO_PACKAGE_FORMAT) || !doc[PACKAGEINFO_PACKAGE_FORMAT].IsString() ||
+      !doc.HasMember(PACKAGEINFO_PACKAGE_HASH) || !doc[PACKAGEINFO_PACKAGE_HASH].IsObject() ||
+      !doc.HasMember(PACKAGEINFO_UPDATE_TITLE) || !doc[PACKAGEINFO_UPDATE_TITLE].IsString() ||
+      !doc.HasMember(PACKAGEINFO_UPDATE_DESCRIPTION) || !doc[PACKAGEINFO_UPDATE_DESCRIPTION].IsString()) {
     return make_selfupdate_error(SUE_PackageInfoFormatError);
   }
 
-  package_info.package_version = package_version->value().as_string();
-  if (force_update != doc.end()) {
-    package_info.force_update = force_update->value().as_bool();
+  package_info.package_version.assign(doc[PACKAGEINFO_PACKAGE_VERSION].GetString(),
+                                      doc[PACKAGEINFO_PACKAGE_VERSION].GetStringLength());
+  if (doc.HasMember(PACKAGEINFO_FORCE_UPDATE)) {
+    package_info.force_update = doc[PACKAGEINFO_FORCE_UPDATE].GetBool();
   }
-  package_info.package_url = package_url->value().as_string();
-  package_info.package_size = package_size->value().as_int64();
-  if (package_format->value().as_string() == PACKAGEINFO_PACKAGE_FORMAT_ZIP) {
-    package_info.package_format = package_format->value().as_string();
+  package_info.package_url.assign(doc[PACKAGEINFO_PACKAGE_URL].GetString(),
+                                  doc[PACKAGEINFO_PACKAGE_URL].GetStringLength());
+  package_info.package_size = doc[PACKAGEINFO_PACKAGE_SIZE].GetUint64();
+  if (strnicmp(doc[PACKAGEINFO_PACKAGE_FORMAT].GetString(), PACKAGEINFO_PACKAGE_FORMAT_ZIP,
+               doc[PACKAGEINFO_PACKAGE_FORMAT].GetStringLength()) == 0) {
+    package_info.package_format.assign(doc[PACKAGEINFO_PACKAGE_FORMAT].GetString(),
+                                       doc[PACKAGEINFO_PACKAGE_FORMAT].GetStringLength());
   } else {
     return make_selfupdate_error(SUE_UnsupportedPackageFormat);
   }
-  auto package_hash_object = package_hash->value().as_object();
-  for (auto it = package_hash_object.begin(); it != package_hash_object.end(); ++it) {
-    if (!it->value().is_string()) {
+  for (auto it = doc[PACKAGEINFO_PACKAGE_HASH].MemberBegin(); it != doc[PACKAGEINFO_PACKAGE_HASH].MemberEnd(); ++it) {
+    if (!it->name.IsString() || !it->value.IsString()) {
       return make_selfupdate_error(SUE_PackageInfoFormatError);
-    } else if (it->key() == PACKAGEINFO_PACKAGE_HASH_ALGO_MD5 || it->key() == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1 ||
-               it->key() == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224 || it->key() == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256 ||
-               it->key() == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384 || it->key() == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
-      package_info.package_hash.insert(std::make_pair(std::string(it->key()), std::string(it->value().as_string())));
+    } else if (strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_MD5, it->name.GetStringLength()) == 0 ||
+               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1, it->name.GetStringLength()) == 0 ||
+               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224, it->name.GetStringLength()) == 0 ||
+               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256, it->name.GetStringLength()) == 0 ||
+               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384, it->name.GetStringLength()) == 0 ||
+               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512, it->name.GetStringLength()) == 0) {
+      package_info.package_hash.insert(std::make_pair(std::string(it->name.GetString(), it->name.GetStringLength()),
+                                                      std::string(it->value.GetString(), it->value.GetStringLength())));
     } else {
       return make_selfupdate_error(SUE_PackageInfoFormatError);
     }
   }
-  package_info.update_title = update_title->value().as_string();
-  package_info.update_description = update_description->value().as_string();
+  package_info.update_title.assign(doc[PACKAGEINFO_UPDATE_TITLE].GetString(),
+                                   doc[PACKAGEINFO_UPDATE_TITLE].GetStringLength());
+  package_info.update_description.assign(doc[PACKAGEINFO_UPDATE_DESCRIPTION].GetString(),
+                                         doc[PACKAGEINFO_UPDATE_DESCRIPTION].GetStringLength());
   return {};
 }
 

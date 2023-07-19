@@ -9,7 +9,6 @@ executable("old_client") {
   sources = [ "old_client.cc" ]
 
   deps = [
-    "../../thirdparty:boost",
     "../client:installer",
     "../client:selfupdate",
   ]
@@ -22,8 +21,5 @@ executable("new_client") {
   }
   sources = [ "new_client.cc" ]
 
-  deps = [
-    "../../thirdparty:boost",
-    "../client:selfupdate",
-  ]
+  deps = [ "../client:selfupdate" ]
 }
