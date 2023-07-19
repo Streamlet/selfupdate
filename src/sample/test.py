@@ -8,7 +8,7 @@ import zipfile
 import hashlib
 import subprocess
 import locale
-import signal
+import time
 
 
 if sys.platform == 'win32':
@@ -122,6 +122,7 @@ def main():
     copy_files(dir)
     make_package(dir)
     process = run_server(dir)
+    time.sleep(3)
     try:
         test(dir)
     finally:
