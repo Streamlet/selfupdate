@@ -36,8 +36,6 @@ std::error_code Install(const PackageInfo &package_info,
     return ec;
 
   long pid = process_util::GetPid();
-  native_string_stream ss;
-  ss << _T("--" INSTALLER_ARGUMENT_WAIT_PID) << _T("=") << pid;
   long installer_pid = process_util::StartProcess(copied_installer_path.native(),
                                                   {
                                                       _T("--" INSTALLER_ARGUMENT_UPDATE),
