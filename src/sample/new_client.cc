@@ -1,12 +1,16 @@
-#include "../include/selfupdate/selfupdate.h"
+#include "../utility/log_init.h"
 #include "../utility/native_string.h"
-#include <iostream>
+#include <selfupdate/selfupdate.h>
 
 int _tmain(int argc, const TCHAR *argv[]) {
+  logging::setup(_T("new_client"), LOG_LEVEL_INFO);
+  logging::setup_from_file(_T("log_settings.ini"));
+  LOG_INFO("new_client launched.");
+
   if (selfupdate::IsNewVersionFirstLaunched(argc, argv))
-    std::cout << "This is new client. Welcome!" << std::endl;
+    LOG_INFO("This is the first launching since upgraded.");
   else
-    std::cout << "This is new client." << std::endl;
+    LOG_INFO("This is an ordinary launching.");
 
   return 0;
 }

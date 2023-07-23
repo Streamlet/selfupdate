@@ -113,8 +113,9 @@ def test(dir):
     result = cmd(client_path)
     print(result)
     lines = result.splitlines()
-    assert lines[0] == 'This is old client.'
-    assert lines[len(lines) - 1] == 'This is new client. Welcome!'
+    assert lines[0].endswith('old_client launched.')
+    assert lines[len(lines) -
+                 1].endswith('This is the first launching since upgraded.')
 
 
 def main():

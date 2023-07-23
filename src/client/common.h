@@ -8,6 +8,8 @@ enum selfupdate_error_code {
   SUE_NetworkError,
   SUE_PackageInfoFormatError,
   SUE_UnsupportedPackageFormat,
+  SUE_UnsupportedHashAlgorithm,
+  SUE_OpenFileError,
   SUE_PackageSizeError,
   SUE_PackageVerifyError,
   SUE_RunInstallerError,

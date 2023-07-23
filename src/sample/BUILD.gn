@@ -5,7 +5,6 @@ executable("old_client") {
   }
 
   include_dirs = [ "../include" ]
-
   sources = [ "old_client.cc" ]
 
   deps = [
@@ -19,6 +18,8 @@ executable("new_client") {
   if (is_win) {
     configs += [ "../../build/config/win:console_subsystem" ]
   }
+
+  include_dirs = [ "../include" ]
   sources = [ "new_client.cc" ]
 
   deps = [ "../client:selfupdate" ]

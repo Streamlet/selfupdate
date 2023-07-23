@@ -1,61 +1,65 @@
+#include "../utility/log_init.h"
 #include "../utility/native_string.h"
-#include <iostream>
 #include <math.h>
 #include <selfupdate/installer.h>
 #include <selfupdate/selfupdate.h>
 
 int _tmain(int argc, const TCHAR *argv[]) {
+  logging::setup(_T("old_client"), LOG_LEVEL_INFO);
+  logging::setup_from_file(_T("log_settings.ini"));
+
+  if (selfupdate::IsNewVersionFirstLaunched(argc, argv)) {
+    LOG_ERROR("ERROR! old_client lauched as new_client, previous upgrading failed!");
+    return -1;
+  }
+
   const selfupdate::InstallContext *install_context = selfupdate::IsInstallMode(argc, argv);
   if (install_context != nullptr) {
-    std::cout << "Installing..." << std::endl;
+    LOG_INFO("Installing...");
     std::error_code ec = selfupdate::DoInstall(install_context);
     if (ec) {
-      std::cout << ec.value() << ": " << ec.message() << std::endl;
       return -1;
     }
     return 0;
   }
 
-  std::cout << "This is old client." << std::endl << std::endl;
+  LOG_INFO("old_client launched.");
 
-  std::cout << "Step 1: query package info" << std::endl;
+  LOG_INFO("Step 1: query package info");
   selfupdate::PackageInfo package_info;
   std::error_code ec = selfupdate::Query("http://localhost:8080/sample_package/1.0", {}, "", package_info);
   if (ec) {
-    std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;
   }
-  std::cout << "package_name: " << package_info.package_name << std::endl;
-  std::cout << "has_new_version: " << package_info.has_new_version << std::endl;
-  std::cout << "package_version: " << package_info.package_version << std::endl;
-  std::cout << "force_update: " << package_info.force_update << std::endl;
-  std::cout << "package_url: " << package_info.package_url << std::endl;
-  std::cout << "package_size: " << package_info.package_size << std::endl;
-  std::cout << "package_format: " << package_info.package_format << std::endl;
-  std::cout << "package_hash: " << std::endl;
-  for (const auto &item : package_info.package_hash)
-    std::cout << "  " << item.first << ": " << item.second << std::endl;
-  std::cout << "update_title: " << package_info.update_title << std::endl;
-  std::cout << "update_description: " << package_info.update_description << std::endl;
 
-  std::cout << "Step 2: download package" << std::endl;
+  LOG_INFO("package_name:", package_info.package_name);
+  LOG_INFO("has_new_version:", package_info.has_new_version);
+  LOG_INFO("package_version:", package_info.package_version);
+  LOG_INFO("force_update:", package_info.force_update);
+  LOG_INFO("package_url:", package_info.package_url);
+  LOG_INFO("package_size:", package_info.package_size);
+  LOG_INFO("package_format:", package_info.package_format);
+  for (const auto &item : package_info.package_hash)
+    LOG_INFO("package_hash: ", item.first, ", ", item.second);
+  LOG_INFO("update_title:", package_info.update_title);
+  LOG_INFO("update_description:", package_info.update_description);
+
+  LOG_INFO("Step 2: download package");
   ec = selfupdate::Download(package_info, [](unsigned long long downloaded_bytes, unsigned long long total_bytes) {
-    std::cout << (round(downloaded_bytes * 10000.0 / total_bytes) / 100) << "%, " << downloaded_bytes << "/"
-              << total_bytes << std::endl;
+    LOG_INFO(std::to_string(round(downloaded_bytes * 10000.0 / total_bytes) / 100) + "%,",
+             std::to_string(downloaded_bytes) + "/" + std::to_string(total_bytes));
   });
 
   if (ec) {
-    std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;
   }
 
-  std::cout << "Step 3: install package" << std::endl;
+  LOG_INFO("Step 3: install package");
   ec = selfupdate::Install(package_info);
   if (ec) {
-    std::cout << ec.value() << ": " << ec.message() << std::endl;
     return -1;
   }
-  std::cout << "Old client quitting." << std::endl;
 
+  LOG_INFO("Old client quitting.");
   return 0;
 }
