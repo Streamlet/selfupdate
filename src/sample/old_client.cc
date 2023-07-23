@@ -1,6 +1,6 @@
 #include "../utility/log_init.h"
 #include "../utility/native_string.h"
-#include <math.h>
+#include <cmath>
 #include <selfupdate/installer.h>
 #include <selfupdate/selfupdate.h>
 

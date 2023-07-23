@@ -3,7 +3,6 @@
 #include "../utility/process_util.h"
 #include "common.h"
 #include <filesystem>
-#include <sstream>
 
 namespace selfupdate {
 

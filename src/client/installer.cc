@@ -4,10 +4,11 @@
 #include "../utility/native_string.h"
 #include "../utility/process_util.h"
 #include "common.h"
+#include <cstdio>
 #include <filesystem>
 #include <sstream>
-#include <stdio.h>
 #include <zlibwrap/zlibwrap.h>
+
 #ifdef _WIN32
 #include "../utility/encoding.h"
 #include <Windows.h>
