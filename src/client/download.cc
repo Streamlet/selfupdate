@@ -27,11 +27,13 @@ long long ReadInteger(const std::filesystem::path &file) {
 #else
   FILE *f = fopen(file.c_str(), "r");
 #endif
-  if (f == nullptr)
+  if (f == nullptr) {
     return -1;
+  }
   unsigned long long v = 0;
-  if (fscanf(f, "%lld", &v) != 1)
+  if (fscanf(f, "%lld", &v) != 1) {
     return -2;
+  }
   fclose(f);
   return v;
 }
@@ -41,8 +43,9 @@ void WriteInteger(const std::filesystem::path &file, long long v) {
 #else
   FILE *f = fopen(file.c_str(), "w");
 #endif
-  if (f == nullptr)
+  if (f == nullptr) {
     return;
+  }
   fprintf(f, "%lld", v);
   fclose(f);
 }
@@ -56,28 +59,34 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
       return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c;
     });
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_MD5) {
-      if (crypto::MD5File(package_file) != hash)
+      if (crypto::MD5File(package_file) != hash) {
         return false;
+      }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1) {
-      if (crypto::SHA1File(package_file) != hash)
+      if (crypto::SHA1File(package_file) != hash) {
         return false;
+      }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224) {
-      if (crypto::SHA224File(package_file) != hash)
+      if (crypto::SHA224File(package_file) != hash) {
         return false;
+      }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256) {
-      if (crypto::SHA256File(package_file) != hash)
+      if (crypto::SHA256File(package_file) != hash) {
         return false;
+      }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384) {
-      if (crypto::SHA384File(package_file) != hash)
+      if (crypto::SHA384File(package_file) != hash) {
         return false;
+      }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
-      if (crypto::SHA512File(package_file) != hash)
+      if (crypto::SHA512File(package_file) != hash) {
         return false;
+      }
     }
   }
   return true;
@@ -170,8 +179,9 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
                            fflush(f);
                            downloaded_size += length;
                            WriteInteger(package_downloading_file, downloaded_size);
-                           if (download_progress_monitor != nullptr)
+                           if (download_progress_monitor != nullptr) {
                              download_progress_monitor(downloaded_size, total_size);
+                           }
                          });
     if (ec) {
       LOG_ERROR("Download package error:", package_info.package_url, ", error category:", ec.category().name(),

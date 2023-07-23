@@ -32,10 +32,12 @@ std::error_code Install(const PackageInfo &package_info,
   std::filesystem::path exe_dir = exe_path.parent_path();
   std::filesystem::path exe_file = exe_path.filename();
 
-  if (installer_path.empty())
+  if (installer_path.empty()) {
     installer_path = exe_path;
-  if (install_location.empty())
+  }
+  if (install_location.empty()) {
     install_location = exe_dir;
+  }
 
   std::filesystem::path copied_installer_path = package_file.parent_path() / installer_path.filename();
   std::filesystem::copy_file(installer_path, copied_installer_path, std::filesystem::copy_options::overwrite_existing,

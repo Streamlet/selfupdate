@@ -31,8 +31,9 @@ const char *selfupdate_error_category::name() const noexcept {
 }
 
 std::string selfupdate_error_category::message(int _Errval) const {
-  if (_Errval >= 0 && _Errval < SUE_Count)
+  if (_Errval >= 0 && _Errval < SUE_Count) {
     return selfupdate_error_message_[_Errval].message;
+  }
   return "unknown error";
 }
 

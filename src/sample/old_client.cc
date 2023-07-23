@@ -39,8 +39,9 @@ int _tmain(int argc, const TCHAR *argv[]) {
   LOG_INFO("package_url:", package_info.package_url);
   LOG_INFO("package_size:", package_info.package_size);
   LOG_INFO("package_format:", package_info.package_format);
-  for (const auto &item : package_info.package_hash)
+  for (const auto &item : package_info.package_hash) {
     LOG_INFO("package_hash: ", item.first, ", ", item.second);
+  }
   LOG_INFO("update_title:", package_info.update_title);
   LOG_INFO("update_description:", package_info.update_description);
 

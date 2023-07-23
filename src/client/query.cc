@@ -38,10 +38,11 @@ std::error_code Query(const std::string &query_url,
   unsigned status = 0;
   std::string response;
   std::error_code ec;
-  if (query_body.empty())
+  if (query_body.empty()) {
     ec = http_client.Get(query_url, headers, &status, nullptr, &response, QUERY_TIMEOUT);
-  else
+  } else {
     ec = http_client.Post(query_url, headers, query_body, &status, nullptr, &response, QUERY_TIMEOUT);
+  }
   if (ec) {
     LOG_ERROR("Querying failed. Error category:", ec.category().name(), ", code:", ec.value(),
               ", message:", ec.message());
