@@ -3,7 +3,7 @@
 #include <selfupdate/selfupdate.h>
 
 int _tmain(int argc, const TCHAR *argv[]) {
-  logging::setup(_T("new_client"), LOG_LEVEL_INFO);
+  logging::setup(_T("new_client"));
   logging::setup_from_file(_T("log_settings.ini"));
   LOG_INFO("new_client launched.");
 
