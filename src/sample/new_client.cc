@@ -4,7 +4,7 @@
 
 int _tmain(int argc, const TCHAR *argv[]) {
   logging::setup(_T("new_client"));
-  logging::setup_from_file(_T("log_settings.ini"));
+  logging::setup_from_file(_T("log.settings"));
   LOG_INFO("new_client launched.");
 
   if (selfupdate::IsNewVersionFirstLaunched(argc, argv)) {

@@ -6,7 +6,7 @@
 
 int _tmain(int argc, const TCHAR *argv[]) {
   logging::setup(_T("old_client"));
-  logging::setup_from_file(_T("log_settings.ini"));
+  logging::setup_from_file(_T("log.settings"));
 
   if (selfupdate::IsNewVersionFirstLaunched(argc, argv)) {
     LOG_ERROR("ERROR! old_client lauched as new_client, previous upgrading failed!");
