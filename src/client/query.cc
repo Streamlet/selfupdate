@@ -42,10 +42,14 @@ std::error_code Query(const std::string &query_url,
     ec = http_client.Get(query_url, headers, &status, nullptr, &response, QUERY_TIMEOUT);
   else
     ec = http_client.Post(query_url, headers, query_body, &status, nullptr, &response, QUERY_TIMEOUT);
-  if (ec || status != 200) {
+  if (ec) {
     LOG_ERROR("Querying failed. Error category:", ec.category().name(), ", code:", ec.value(),
-              ", message:", ec.message(), ", http status:", status);
+              ", message:", ec.message());
     return ec;
+  }
+  if (status != 200) {
+    LOG_ERROR("Querying failed. http status:", status);
+    return make_selfupdate_error(SUE_NetworkError);
   }
   LOG_INFO("Quering succeeded. Result:", response);
 

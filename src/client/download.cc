@@ -173,10 +173,14 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
                            if (download_progress_monitor != nullptr)
                              download_progress_monitor(downloaded_size, total_size);
                          });
-    if (ec || status != 200) {
+    if (ec) {
       LOG_ERROR("Download package error:", package_info.package_url, ", error category:", ec.category().name(),
-                ", code:", ec.value(), ", message:", ec.message(), ", http status:", status);
+                ", code:", ec.value(), ", message:", ec.message());
       return ec;
+    }
+    if (status != 200) {
+      LOG_ERROR("Querying failed. http status:", status);
+      return make_selfupdate_error(SUE_NetworkError);
     }
   }
 
