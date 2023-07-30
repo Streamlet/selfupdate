@@ -11,7 +11,7 @@ import (
 func NewRouter(processor Processor, root string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		packageName, clientVersion, err := parseRequestPath(r.RequestURI)
+		packageName, clientVersion, err := parseRequestPath(r.URL.Path)
 		if err != nil {
 			if len(root) > 0 {
 				path := filepath.Join(filepath.FromSlash(root), filepath.FromSlash(r.RequestURI))
