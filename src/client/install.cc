@@ -9,13 +9,13 @@ namespace selfupdate {
 std::error_code Install(const PackageInfo &package_info,
                         std::filesystem::path installer_path /*= {}*/,
                         std::filesystem::path install_location /* = {}*/) {
-  LOG_INFO("Installing:", package_info.package_name);
+  LOG_INFO("Installing: ", package_info.package_name);
 
   std::error_code ec;
   std::filesystem::path cache_dir = std::filesystem::temp_directory_path(ec);
   if (ec) {
-    LOG_ERROR("Get temp dir error. Error category:", ec.category().name(), ", code:", ec.value(),
-              ", message:", ec.message());
+    LOG_ERROR("Get temp dir error. Error category: ", ec.category().name(), ", code: ", ec.value(),
+              ", message: ", ec.message());
     return ec;
   }
   cache_dir /= package_info.package_name;
@@ -23,8 +23,8 @@ std::error_code Install(const PackageInfo &package_info,
                                   FILE_NAME_EXT_SEP + package_info.package_format;
   std::filesystem::path package_file = cache_dir / package_file_name;
   if (!std::filesystem::exists(package_file, ec)) {
-    LOG_ERROR("Package file missing:", package_file.u8string(), ", error category:", ec.category().name(),
-              ", code:", ec.value(), ", message:", ec.message());
+    LOG_ERROR("Package file missing: ", package_file.u8string(), ", error category: ", ec.category().name(),
+              ", code: ", ec.value(), ", message: ", ec.message());
     return ec;
   }
 
@@ -43,21 +43,24 @@ std::error_code Install(const PackageInfo &package_info,
   std::filesystem::copy_file(installer_path, copied_installer_path, std::filesystem::copy_options::overwrite_existing,
                              ec);
   if (ec) {
-    LOG_ERROR("Copy installer failed, from:", installer_path.u8string(), ", to:", copied_installer_path.u8string(),
-              ", error category:", ec.category().name(), ", code:", ec.value(), ", message:", ec.message());
+    LOG_ERROR("Copy installer failed, from: ", installer_path.u8string(), ", to: ", copied_installer_path.u8string(),
+              ", error category: ", ec.category().name(), ", code: ", ec.value(), ", message: ", ec.message());
     return ec;
   }
 
   long pid = process_util::GetPid();
-  TLOG_INFO(_T("Launching installer. Command line:"), copied_installer_path.c_str(), _T("--" INSTALLER_ARGUMENT_UPDATE),
-            _T("--" INSTALLER_ARGUMENT_WAIT_PID), pid, _T("--" INSTALLER_ARGUMENT_SOURCE), package_file.c_str(),
-            _T("--" INSTALLER_ARGUMENT_TARGET), install_location.c_str(), _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE),
-            exe_file.c_str());
+  TLOG_INFO(_T("Launching installer. Command line: "), copied_installer_path.c_str(),
+            _T("--" INSTALLER_ARGUMENT_UPDATE), _T("--" INSTALLER_ARGUMENT_WAIT_PID), pid,
+            _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE), package_info.force_update ? _T("1") : _T("0"),
+            _T("--" INSTALLER_ARGUMENT_SOURCE), package_file.c_str(), _T("--" INSTALLER_ARGUMENT_TARGET),
+            install_location.c_str(), _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE), exe_file.c_str());
   long installer_pid = process_util::StartProcess(copied_installer_path.native(),
                                                   {
                                                       _T("--" INSTALLER_ARGUMENT_UPDATE),
                                                       _T("--" INSTALLER_ARGUMENT_WAIT_PID),
                                                       to_native_string(pid),
+                                                      _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE),
+                                                      package_info.force_update ? _T("1") : _T("0"),
                                                       _T("--" INSTALLER_ARGUMENT_SOURCE),
                                                       package_file.native(),
                                                       _T("--" INSTALLER_ARGUMENT_TARGET),
@@ -67,8 +70,9 @@ std::error_code Install(const PackageInfo &package_info,
                                                   },
                                                   copied_installer_path.parent_path().native());
   if (installer_pid == 0) {
-    TLOG_ERROR(_T("Launch installer failed. Command line:"), copied_installer_path.c_str(),
+    TLOG_ERROR(_T("Launch installer failed. Command line: "), copied_installer_path.c_str(),
                _T("--" INSTALLER_ARGUMENT_UPDATE), _T("--" INSTALLER_ARGUMENT_WAIT_PID), pid,
+               _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE), package_info.force_update ? _T("1") : _T("0"),
                _T("--" INSTALLER_ARGUMENT_SOURCE), package_file.c_str(), _T("--" INSTALLER_ARGUMENT_TARGET),
                install_location.c_str(), _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE), exe_file.c_str());
     return make_selfupdate_error(SUE_RunInstallerError);

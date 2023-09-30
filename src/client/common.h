@@ -53,6 +53,7 @@ std::error_code make_selfupdate_error(selfupdate_error_code error);
 
 #define INSTALLER_ARGUMENT_UPDATE "update"
 #define INSTALLER_ARGUMENT_WAIT_PID "wait-pid"
+#define INSTALLER_ARGUMENT_FORCE_UPDATE "force"
 #define INSTALLER_ARGUMENT_SOURCE "source"
 #define INSTALLER_ARGUMENT_TARGET "target"
 #define INSTALLER_ARGUMENT_LAUNCH_FILE "launch-file"

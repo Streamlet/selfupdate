@@ -32,18 +32,18 @@ int _tmain(int argc, const TCHAR *argv[]) {
     return -1;
   }
 
-  LOG_INFO("package_name:", package_info.package_name);
-  LOG_INFO("has_new_version:", package_info.has_new_version);
-  LOG_INFO("package_version:", package_info.package_version);
-  LOG_INFO("force_update:", package_info.force_update);
-  LOG_INFO("package_url:", package_info.package_url);
-  LOG_INFO("package_size:", package_info.package_size);
-  LOG_INFO("package_format:", package_info.package_format);
+  LOG_INFO("package_name: ", package_info.package_name);
+  LOG_INFO("has_new_version: ", package_info.has_new_version);
+  LOG_INFO("package_version: ", package_info.package_version);
+  LOG_INFO("force_update: ", package_info.force_update);
+  LOG_INFO("package_url: ", package_info.package_url);
+  LOG_INFO("package_size: ", package_info.package_size);
+  LOG_INFO("package_format: ", package_info.package_format);
   for (const auto &item : package_info.package_hash) {
     LOG_INFO("package_hash: ", item.first, ", ", item.second);
   }
-  LOG_INFO("update_title:", package_info.update_title);
-  LOG_INFO("update_description:", package_info.update_description);
+  LOG_INFO("update_title: ", package_info.update_title);
+  LOG_INFO("update_description: ", package_info.update_description);
 
   LOG_INFO("Step 2: download package");
   ec = selfupdate::Download(package_info, [](unsigned long long downloaded_bytes, unsigned long long total_bytes) {

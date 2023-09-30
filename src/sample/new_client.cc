@@ -8,7 +8,7 @@ int _tmain(int argc, const TCHAR *argv[]) {
   LOG_INFO("new_client launched.");
 
   if (selfupdate::IsNewVersionFirstLaunched(argc, argv)) {
-    LOG_INFO("This is the first launching since upgraded.");
+    LOG_INFO("This is the first launching since upgraded. Force updated: ", selfupdate::IsForceUpdated(argc, argv));
   } else {
     LOG_INFO("This is an ordinary launching.");
   }

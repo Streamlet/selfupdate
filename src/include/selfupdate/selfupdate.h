@@ -41,8 +41,11 @@ std::error_code Install(const PackageInfo &package_info,
 #ifdef _WIN32
 bool IsNewVersionFirstLaunched(int argc, const TCHAR *argv[]);
 bool IsNewVersionFirstLaunched(const TCHAR *command_line);
+bool IsForceUpdated(int argc, const TCHAR *argv[]);
+bool IsForceUpdated(const TCHAR *command_line);
 #else
 bool IsNewVersionFirstLaunched(int argc, const char *argv[]);
+bool IsForceUpdated(int argc, const char *argv[]);
 #endif
 
 } // namespace selfupdate
