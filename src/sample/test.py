@@ -114,8 +114,8 @@ def test(dir):
     print(result)
     lines = result.splitlines()
     assert lines[0].endswith('old_client launched.')
-    assert lines[len(lines) -
-                 1].endswith('This is the first launching since upgraded. ForceUpdated: 0')
+    assert lines[len(
+        lines) - 1].endswith('This is the first launching since upgraded. Force updated: 0')
 
 
 def main():
