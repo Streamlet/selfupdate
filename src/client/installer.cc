@@ -54,6 +54,7 @@ const InstallContext *IsInstallMode(const cmdline_options::ParsedOption &options
 
   InstallContext *install_context = new InstallContext;
   install_context->wait_pid = wait_pid;
+  install_context->force_update = force_update;
   install_context->source = source;
   install_context->target = target;
   install_context->launch_file = launch_file;
