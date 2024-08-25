@@ -1,38 +1,38 @@
 #include "../include/selfupdate/installer.h"
-#include "../utility/cmdline_options.h"
-#include "../utility/native_string.h"
 #include "common.h"
+#include <xl/cmdline_options>
+#include <xl/native_string>
 
 namespace selfupdate {
 
 namespace {
 
-bool IsNewVersionFirstLaunched(const cmdline_options::ParsedOption &options) {
+bool IsNewVersionFirstLaunched(const xl::cmdline_options::parsed_options &options) {
   return options.has(_T(INSTALLER_ARGUMENT_NEW_VERSION));
 }
 
-bool IsForceUpdated(const cmdline_options::ParsedOption &options) {
+bool IsForceUpdated(const xl::cmdline_options::parsed_options &options) {
   return options.get_as<bool>(_T(INSTALLER_ARGUMENT_FORCE_UPDATE));
 }
 
 } // namespace
 
 bool IsNewVersionFirstLaunched(int argc, const TCHAR *argv[]) {
-  return IsNewVersionFirstLaunched(cmdline_options::parse(argc, argv));
+  return IsNewVersionFirstLaunched(xl::cmdline_options::parse(argc, argv));
 }
 
 bool IsForceUpdated(int argc, const TCHAR *argv[]) {
-  return IsForceUpdated(cmdline_options::parse(argc, argv));
+  return IsForceUpdated(xl::cmdline_options::parse(argc, argv));
 }
 
 #ifdef _WIN32
 
 bool IsNewVersionFirstLaunched(const TCHAR *command_line) {
-  return IsNewVersionFirstLaunched(cmdline_options::parse(command_line));
+  return IsNewVersionFirstLaunched(xl::cmdline_options::parse(command_line));
 }
 
 bool IsForceUpdated(const TCHAR *command_line) {
-  return IsForceUpdated(cmdline_options::parse(command_line));
+  return IsForceUpdated(xl::cmdline_options::parse(command_line));
 }
 
 #endif

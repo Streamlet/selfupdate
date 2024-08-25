@@ -12,11 +12,7 @@ static_library("selfupdate") {
     "query.cc",
   ]
 
-  deps = [
-    "../../thirdparty:loki",
-    "../../thirdparty:rapidjson",
-    "../utility:utility",
-  ]
+  public_deps = [ "../../thirdparty:utility" ]
 }
 
 static_library("installer") {
@@ -30,9 +26,5 @@ static_library("installer") {
     "installer.cc",
   ]
 
-  deps = [
-    "../../thirdparty:loki",
-    "../../thirdparty:zlibwrap",
-    "../utility:utility",
-  ]
+  public_deps = [ "../../thirdparty:utility" ]
 }

@@ -11,6 +11,5 @@ group("test") {
   deps = [
     "src/sample:new_client",
     "src/sample:old_client",
-    "src/utility:utility_test",
   ]
 }

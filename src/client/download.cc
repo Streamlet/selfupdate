@@ -1,12 +1,12 @@
 #include "../include/selfupdate/selfupdate.h"
-#include "../utility/crypto.h"
-#include "../utility/http_client.h"
-#include "../utility/log.h"
 #include "common.h"
 #include <cstdio>
 #include <filesystem>
-#include <loki/ScopeGuard.h>
 #include <sstream>
+#include <xl/crypto>
+#include <xl/http>
+#include <xl/log>
+#include <xl/scope_exit>
 
 #ifdef _WIN32
 #define ftell _ftelli64
@@ -59,32 +59,32 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
       return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c;
     });
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_MD5) {
-      if (crypto::MD5File(package_file) != hash) {
+      if (xl::crypto::md5_file(package_file.c_str()) != hash) {
         return false;
       }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1) {
-      if (crypto::SHA1File(package_file) != hash) {
+      if (xl::crypto::sha1_file(package_file.c_str()) != hash) {
         return false;
       }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224) {
-      if (crypto::SHA224File(package_file) != hash) {
+      if (xl::crypto::sha224_file(package_file.c_str()) != hash) {
         return false;
       }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256) {
-      if (crypto::SHA256File(package_file) != hash) {
+      if (xl::crypto::sha256_file(package_file.c_str()) != hash) {
         return false;
       }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384) {
-      if (crypto::SHA384File(package_file) != hash) {
+      if (xl::crypto::sha384_file(package_file.c_str()) != hash) {
         return false;
       }
     }
     if (item.first == PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
-      if (crypto::SHA512File(package_file) != hash) {
+      if (xl::crypto::sha512_file(package_file.c_str()) != hash) {
         return false;
       }
     }
@@ -95,21 +95,21 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
 } // namespace
 
 std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor) {
-  LOG_INFO("Downloanding: ", package_info.package_url);
+  XL_LOG_INFO("Downloanding: ", package_info.package_url);
 
   std::error_code ec;
   std::filesystem::path cache_dir = std::filesystem::temp_directory_path(ec);
   if (ec) {
-    LOG_ERROR("Get temp dir error. Error category: ", ec.category().name(), ", code: ", ec.value(),
-              ", message: ", ec.message());
+    XL_LOG_ERROR("Get temp dir error. Error category: ", ec.category().name(), ", code: ", ec.value(),
+                 ", message: ", ec.message());
     return ec;
   }
 
   cache_dir /= package_info.package_name;
   std::filesystem::create_directories(cache_dir, ec);
   if (ec) {
-    LOG_ERROR("Create cache dir error. dir: ", cache_dir.u8string(), ", error category: ", ec.category().name(),
-              ", code: ", ec.value(), ", message: ", ec.message());
+    XL_LOG_ERROR("Create cache dir error. dir: ", cache_dir.u8string(), ", error category: ", ec.category().name(),
+                 ", code: ", ec.value(), ", message: ", ec.message());
     return ec;
   }
 
@@ -126,15 +126,15 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
     FILE *f = fopen(package_file.c_str(), "wb");
 #endif
     if (f == NULL) {
-      LOG_ERROR("Open local file error: ", package_file);
+      XL_LOG_ERROR("Open local file error: ", package_file);
       return make_selfupdate_error(SUE_OpenFileError);
     }
-    LOKI_ON_BLOCK_EXIT(fclose, f);
+    XL_ON_BLOCK_EXIT(fclose, f);
     fseek(f, 0, SEEK_END);
     long long offset = ftell(f);
     if (offset == package_info.package_size && downloaded_size < 0 &&
         VerifyPackage(package_file, package_info.package_hash)) {
-      LOG_INFO("Package file already downloaded and verified OK: ", package_file);
+      XL_LOG_INFO("Package file already downloaded and verified OK: ", package_file);
       return {};
     }
 
@@ -144,25 +144,29 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
       fseek(f, 0, SEEK_SET);
       downloaded_size = 0;
     }
-    HttpClient http_client(SELFUPDATE_USER_AGENT);
-    unsigned status = 0;
-    HttpClient::ResponseHeader response_header;
-    ec = http_client.Head(package_info.package_url, {}, &status, &response_header);
-    if (ec || status != 200) {
-      LOG_ERROR("Request HEAD error: ", package_info.package_url, ", error category: ", ec.category().name(),
-                ", code: ", ec.value(), ", message: ", ec.message(), ", http status: ", status);
-      return ec;
+    xl::http::Request request;
+    request.url = package_info.package_url;
+    request.method = xl::http::METHOD_HEAD;
+    xl::http::Response response;
+    xl::http::Headers response_headers;
+    response.headers = &response_headers;
+    xl::http::Option option;
+    option.user_agent = SELFUPDATE_USER_AGENT;
+    int status = xl::http::send(request, &response);
+    if (status != 200) {
+      XL_LOG_ERROR("Request HEAD error: ", package_info.package_url, ", http status/error: ", status);
+      return make_selfupdate_error(SUE_NetworkError);
     }
 
     long long total_size = package_info.package_size;
-    auto it = response_header.find("Content-Length");
-    if (it != response_header.end()) {
+    auto it = response_headers.find("Content-Length");
+    if (it != response_headers.end()) {
       std::string content_length = it->second;
       total_size = atoll(content_length.c_str());
     }
 
     if (total_size != package_info.package_size) {
-      LOG_ERROR("Package size error, expected: ", package_info.package_size, ", got: ", total_size);
+      XL_LOG_ERROR("Package size error, expected: ", package_info.package_size, ", got: ", total_size);
       return make_selfupdate_error(SUE_PackageSizeError);
     }
 
@@ -170,26 +174,27 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
     range_expr << "bytes=";
     range_expr << downloaded_size;
     range_expr << "-";
-    HttpClient::RequestHeader request_header = {
+    request.headers = {
         {"Range", range_expr.str()}
     };
-    ec = http_client.Get(package_info.package_url, request_header, &status, nullptr,
-                         [&](const void *data, size_t length) {
-                           fwrite(data, 1, length, f);
-                           fflush(f);
-                           downloaded_size += length;
-                           WriteInteger(package_downloading_file, downloaded_size);
-                           if (download_progress_monitor != nullptr) {
-                             download_progress_monitor(downloaded_size, total_size);
-                           }
-                         });
-    if (ec) {
-      LOG_ERROR("Download package error: ", package_info.package_url, ", error category: ", ec.category().name(),
-                ", code: ", ec.value(), ", message: ", ec.message());
-      return ec;
+    response_headers.clear();
+    status = xl::http::get(package_info.package_url, request.headers, response_headers,
+                           [&](const void *buffer, size_t size) -> size_t {
+                             fwrite(buffer, 1, size, f);
+                             fflush(f);
+                             downloaded_size += size;
+                             WriteInteger(package_downloading_file, downloaded_size);
+                             if (download_progress_monitor != nullptr) {
+                               download_progress_monitor(downloaded_size, total_size);
+                             }
+                             return size;
+                           });
+    if (status != 200) {
+      XL_LOG_ERROR("Download package error: ", package_info.package_url, ", status/error: ", status);
+      return make_selfupdate_error(SUE_NetworkError);
     }
     if (status != 200) {
-      LOG_ERROR("Querying failed. http status: ", status);
+      XL_LOG_ERROR("Querying failed. http status: ", status);
       return make_selfupdate_error(SUE_NetworkError);
     }
   }
@@ -200,11 +205,11 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
   std::filesystem::remove(package_downloading_file);
   if (!VerifyPackage(package_file, package_info.package_hash)) {
     std::filesystem::remove(package_file);
-    LOG_ERROR("Verify package error: ", package_file);
+    XL_LOG_ERROR("Verify package error: ", package_file);
     return make_selfupdate_error(SUE_PackageVerifyError);
   }
 
-  LOG_INFO("Downloaded package OK: ", package_file);
+  XL_LOG_INFO("Downloaded package OK: ", package_file);
   return {};
 }
 
