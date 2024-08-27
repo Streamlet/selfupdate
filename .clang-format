@@ -20,3 +20,6 @@ ShortNamespaceLines: 0
 SortIncludes: CaseInsensitive
 AlignArrayOfStructures: Left
 InsertBraces: True
+
+MacroBlockBegin: "^XL_.*_BEGIN$"
+MacroBlockEnd: "^XL_.*_END$"

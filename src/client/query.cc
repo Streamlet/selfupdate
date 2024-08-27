@@ -1,8 +1,7 @@
 #include "../include/selfupdate/selfupdate.h"
 #include "common.h"
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
 #include <xl/http>
+#include <xl/json>
 #include <xl/log>
 
 #ifndef _WIN32
@@ -14,18 +13,22 @@ namespace selfupdate {
 
 namespace {
 
-const unsigned QUERY_TIMEOUT = 10000;
+typedef std::map<std::string, std::string> StringMap;
 
-const char *PACKAGEINFO_PACKAGE_NAME = "package_name";
-const char *PACKAGEINFO_HAS_NEW_VERSION = "has_new_version";
-const char *PACKAGEINFO_PACKAGE_VERSION = "package_version";
-const char *PACKAGEINFO_FORCE_UPDATE = "force_update";
-const char *PACKAGEINFO_PACKAGE_URL = "package_url";
-const char *PACKAGEINFO_PACKAGE_SIZE = "package_size";
-const char *PACKAGEINFO_PACKAGE_FORMAT = "package_format";
-const char *PACKAGEINFO_PACKAGE_HASH = "package_hash";
-const char *PACKAGEINFO_UPDATE_TITLE = "update_title";
-const char *PACKAGEINFO_UPDATE_DESCRIPTION = "update_description";
+XL_JSON_BEGIN(PackageInfoInternal)
+  XL_JSON_MEMBER(std::string, package_name)
+  XL_JSON_MEMBER(bool, has_new_version)
+  XL_JSON_MEMBER(std::string, package_version)
+  XL_JSON_MEMBER(bool, force_update)
+  XL_JSON_MEMBER(std::string, package_url)
+  XL_JSON_MEMBER(unsigned long long, package_size)
+  XL_JSON_MEMBER(std::string, package_format)
+  XL_JSON_MEMBER(StringMap, package_hash)
+  XL_JSON_MEMBER(std::string, update_title)
+  XL_JSON_MEMBER(std::string, update_description)
+XL_JSON_END()
+
+const unsigned QUERY_TIMEOUT = 10000;
 
 } // namespace
 
@@ -51,79 +54,39 @@ std::error_code Query(const std::string &query_url,
   XL_LOG_INFO("Quering succeeded. Result: ", response_body);
   std::error_code ec;
 
-  rapidjson::Document doc;
-  doc.Parse<rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag | rapidjson::kParseNanAndInfFlag>(
-      response_body);
-  if (doc.HasParseError()) {
-    XL_LOG_ERROR("Parsing json failed. Position: ", doc.GetErrorOffset(),
-                 ", error: ", rapidjson::GetParseError_En(doc.GetParseError()));
+  PackageInfoInternal json;
+  if (!json.json_parse(response_body.c_str())) {
+    XL_LOG_ERROR("Parsing json failed.");
     return make_selfupdate_error(SUE_PackageInfoFormatError);
   }
-  if (!doc.HasMember(PACKAGEINFO_PACKAGE_NAME) || !doc[PACKAGEINFO_PACKAGE_NAME].IsString() ||
-      !doc.HasMember(PACKAGEINFO_HAS_NEW_VERSION) || !doc[PACKAGEINFO_HAS_NEW_VERSION].IsBool()) {
-    XL_LOG_ERROR("Package Info missing or type error: ", PACKAGEINFO_PACKAGE_NAME, PACKAGEINFO_HAS_NEW_VERSION);
-    return make_selfupdate_error(SUE_PackageInfoFormatError);
-  }
-  package_info.package_name.assign(doc[PACKAGEINFO_PACKAGE_NAME].GetString(),
-                                   doc[PACKAGEINFO_PACKAGE_NAME].GetStringLength());
-  package_info.has_new_version = doc[PACKAGEINFO_HAS_NEW_VERSION].GetBool();
+
+  package_info.package_name = std::move(json.package_name);
+  package_info.has_new_version = json.has_new_version;
+  package_info.package_version = std::move(json.package_version);
+  package_info.force_update = std::move(json.force_update);
+  package_info.package_url = std::move(json.package_url);
+  package_info.package_size = std::move(json.package_size);
+  package_info.package_format = std::move(json.package_format);
+  package_info.package_hash = std::move(json.package_hash);
+  package_info.update_title = std::move(json.update_title);
+  package_info.update_description = std::move(json.update_description);
+
   if (!package_info.has_new_version) {
     XL_LOG_INFO("No new version.");
     return {};
   }
-
-  if (!doc.HasMember(PACKAGEINFO_PACKAGE_VERSION) || !doc[PACKAGEINFO_PACKAGE_VERSION].IsString() ||
-      (doc.HasMember(PACKAGEINFO_FORCE_UPDATE) && !doc[PACKAGEINFO_FORCE_UPDATE].IsBool()) ||
-      !doc.HasMember(PACKAGEINFO_PACKAGE_URL) || !doc[PACKAGEINFO_PACKAGE_URL].IsString() ||
-      !doc.HasMember(PACKAGEINFO_PACKAGE_SIZE) || !doc[PACKAGEINFO_PACKAGE_SIZE].IsUint64() ||
-      !doc.HasMember(PACKAGEINFO_PACKAGE_FORMAT) || !doc[PACKAGEINFO_PACKAGE_FORMAT].IsString() ||
-      !doc.HasMember(PACKAGEINFO_PACKAGE_HASH) || !doc[PACKAGEINFO_PACKAGE_HASH].IsObject() ||
-      !doc.HasMember(PACKAGEINFO_UPDATE_TITLE) || !doc[PACKAGEINFO_UPDATE_TITLE].IsString() ||
-      !doc.HasMember(PACKAGEINFO_UPDATE_DESCRIPTION) || !doc[PACKAGEINFO_UPDATE_DESCRIPTION].IsString()) {
-    XL_LOG_ERROR("Package Info missing or type error: ", PACKAGEINFO_PACKAGE_VERSION, PACKAGEINFO_FORCE_UPDATE,
-                 PACKAGEINFO_PACKAGE_URL, PACKAGEINFO_PACKAGE_SIZE, PACKAGEINFO_PACKAGE_FORMAT,
-                 PACKAGEINFO_PACKAGE_HASH, PACKAGEINFO_UPDATE_TITLE, PACKAGEINFO_UPDATE_DESCRIPTION);
-    return make_selfupdate_error(SUE_PackageInfoFormatError);
-  }
-
-  package_info.package_version.assign(doc[PACKAGEINFO_PACKAGE_VERSION].GetString(),
-                                      doc[PACKAGEINFO_PACKAGE_VERSION].GetStringLength());
-  if (doc.HasMember(PACKAGEINFO_FORCE_UPDATE)) {
-    package_info.force_update = doc[PACKAGEINFO_FORCE_UPDATE].GetBool();
-  }
-  package_info.package_url.assign(doc[PACKAGEINFO_PACKAGE_URL].GetString(),
-                                  doc[PACKAGEINFO_PACKAGE_URL].GetStringLength());
-  package_info.package_size = doc[PACKAGEINFO_PACKAGE_SIZE].GetUint64();
-  if (strnicmp(doc[PACKAGEINFO_PACKAGE_FORMAT].GetString(), PACKAGEINFO_PACKAGE_FORMAT_ZIP,
-               doc[PACKAGEINFO_PACKAGE_FORMAT].GetStringLength()) == 0) {
-    package_info.package_format.assign(doc[PACKAGEINFO_PACKAGE_FORMAT].GetString(),
-                                       doc[PACKAGEINFO_PACKAGE_FORMAT].GetStringLength());
-  } else {
-    XL_LOG_ERROR("Unsupported package format: ", std::string_view(doc[PACKAGEINFO_PACKAGE_FORMAT].GetString(),
-                                                                  doc[PACKAGEINFO_PACKAGE_FORMAT].GetStringLength()));
+  if (package_info.package_format != PACKAGEINFO_PACKAGE_FORMAT_ZIP) {
+    XL_LOG_ERROR("Unsupported package format: ", package_info.package_format);
     return make_selfupdate_error(SUE_UnsupportedPackageFormat);
   }
-  for (auto it = doc[PACKAGEINFO_PACKAGE_HASH].MemberBegin(); it != doc[PACKAGEINFO_PACKAGE_HASH].MemberEnd(); ++it) {
-    if (!it->name.IsString() || !it->value.IsString()) {
-      XL_LOG_ERROR("Hash data error: ", PACKAGEINFO_PACKAGE_HASH);
-      return make_selfupdate_error(SUE_PackageInfoFormatError);
-    } else if (strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_MD5, it->name.GetStringLength()) == 0 ||
-               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1, it->name.GetStringLength()) == 0 ||
-               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224, it->name.GetStringLength()) == 0 ||
-               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256, it->name.GetStringLength()) == 0 ||
-               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384, it->name.GetStringLength()) == 0 ||
-               strnicmp(it->name.GetString(), PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512, it->name.GetStringLength()) == 0) {
-      package_info.package_hash.insert(std::make_pair(std::string(it->name.GetString(), it->name.GetStringLength()),
-                                                      std::string(it->value.GetString(), it->value.GetStringLength())));
-    } else {
-      XL_LOG_ERROR("Unsupported hash algorithm: ", std::string_view(it->name.GetString(), it->name.GetStringLength()));
+  for (const auto &item : package_info.package_hash) {
+    if (item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_MD5 && item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1 &&
+        item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224 && item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256 &&
+        item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384 && item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
+      XL_LOG_ERROR("Unsupported hash algorithm: ", item.first);
       return make_selfupdate_error(SUE_UnsupportedHashAlgorithm);
     }
   }
-  package_info.update_title.assign(doc[PACKAGEINFO_UPDATE_TITLE].GetString(),
-                                   doc[PACKAGEINFO_UPDATE_TITLE].GetStringLength());
-  package_info.update_description.assign(doc[PACKAGEINFO_UPDATE_DESCRIPTION].GetString(),
-                                         doc[PACKAGEINFO_UPDATE_DESCRIPTION].GetStringLength());
   XL_LOG_INFO("New version found: ", package_info.package_version, ", url: ", package_info.package_url);
   return {};
 }
