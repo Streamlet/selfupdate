@@ -1,6 +1,6 @@
 #include <cmath>
 #include <selfupdate/installer.h>
-#include <selfupdate/selfupdate.h>
+#include <selfupdate/updater.h>
 #include <xl/log_setup>
 #include <xl/native_string>
 

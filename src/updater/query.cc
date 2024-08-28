@@ -1,5 +1,5 @@
-#include "common.h"
-#include <selfupdate/selfupdate.h>
+#include "../common.h"
+#include <selfupdate/updater.h>
 #include <xl/http>
 #include <xl/json>
 #include <xl/log>

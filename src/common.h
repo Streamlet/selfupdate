@@ -1,5 +1,4 @@
-#include <system_error>
-#include <xl/native_string>
+#pragma once
 
 #define PACKAGEINFO_PACKAGE_FORMAT_ZIP "zip"
 

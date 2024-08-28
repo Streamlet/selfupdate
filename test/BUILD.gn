@@ -8,8 +8,8 @@ executable("old_client") {
   sources = [ "old_client.cc" ]
 
   deps = [
-    "../src:installer",
-    "../src:selfupdate",
+    "../src/installer",
+    "../src/updater",
   ]
 }
 
@@ -22,7 +22,7 @@ executable("new_client") {
   include_dirs = [ "../include" ]
   sources = [ "new_client.cc" ]
 
-  deps = [ "../src:selfupdate" ]
+  deps = [ "../src/updater" ]
 }
 
 copy("http_server") {

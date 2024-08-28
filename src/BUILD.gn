@@ -1,37 +1,6 @@
-static_library("selfupdate") {
-  if (is_posix) {
-    cflags = [ "-Wno-deprecated-declarations" ]
-  }
-  include_dirs = [ "../include" ]
-  sources = [
-    "../include/selfupdate/selfupdate.h",
-    "common.h",
-    "download.cc",
-    "install.cc",
-    "launch.cc",
-    "query.cc",
-  ]
-
-  public_deps = [ "../thirdparty:utility" ]
-}
-
-static_library("installer") {
-  if (is_posix) {
-    cflags = [ "-Wno-deprecated-declarations" ]
-  }
-  include_dirs = [ "../include" ]
-  sources = [
-    "../include/selfupdate/installer.h",
-    "common.h",
-    "installer.cc",
-  ]
-
-  public_deps = [ "../thirdparty:utility" ]
-}
-
 group("src") {
   deps = [
-    ":installer",
-    ":selfupdate",
+    "installer",
+    "updater",
   ]
 }

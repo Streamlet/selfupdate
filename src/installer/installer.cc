@@ -1,7 +1,7 @@
-#include "../include/selfupdate/installer.h"
-#include "common.h"
+#include "../common.h"
 #include <cstdio>
 #include <filesystem>
+#include <selfupdate/installer.h>
 #include <sstream>
 #include <xl/cmdline_options>
 #include <xl/encoding>

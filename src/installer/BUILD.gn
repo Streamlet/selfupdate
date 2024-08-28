@@ -1,0 +1,13 @@
+static_library("installer") {
+  if (is_posix) {
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
+  include_dirs = [ "../../include" ]
+  sources = [
+    "../../include/selfupdate/installer.h",
+    "common.h",
+    "installer.cc",
+  ]
+
+  public_deps = [ "../../thirdparty:utility" ]
+}

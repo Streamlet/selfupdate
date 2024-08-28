@@ -1,7 +1,7 @@
-#include "common.h"
+#include "../common.h"
 #include <cstdio>
 #include <filesystem>
-#include <selfupdate/selfupdate.h>
+#include <selfupdate/updater.h>
 #include <sstream>
 #include <xl/crypto>
 #include <xl/http>

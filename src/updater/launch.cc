@@ -1,5 +1,5 @@
-#include "../include/selfupdate/installer.h"
-#include "common.h"
+#include "../common.h"
+#include <selfupdate/updater.h>
 #include <xl/cmdline_options>
 #include <xl/native_string>
 

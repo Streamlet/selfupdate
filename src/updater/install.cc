@@ -1,6 +1,6 @@
-#include "common.h"
+#include "../common.h"
 #include <filesystem>
-#include <selfupdate/selfupdate.h>
+#include <selfupdate/updater.h>
 #include <xl/log>
 #include <xl/native_string>
 #include <xl/process>

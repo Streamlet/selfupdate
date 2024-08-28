@@ -1,0 +1,16 @@
+static_library("updater") {
+  if (is_posix) {
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
+  include_dirs = [ "../../include" ]
+  sources = [
+    "../../include/selfupdate/updater.h",
+    "common.h",
+    "download.cc",
+    "install.cc",
+    "launch.cc",
+    "query.cc",
+  ]
+
+  public_deps = [ "../../thirdparty:utility" ]
+}
