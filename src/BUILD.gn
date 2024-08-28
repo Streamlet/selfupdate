@@ -2,9 +2,9 @@ static_library("selfupdate") {
   if (is_posix) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
+  include_dirs = [ "../include" ]
   sources = [
     "../include/selfupdate/selfupdate.h",
-    "common.cc",
     "common.h",
     "download.cc",
     "install.cc",
@@ -19,9 +19,9 @@ static_library("installer") {
   if (is_posix) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }
+  include_dirs = [ "../include" ]
   sources = [
     "../include/selfupdate/installer.h",
-    "common.cc",
     "common.h",
     "installer.cc",
   ]

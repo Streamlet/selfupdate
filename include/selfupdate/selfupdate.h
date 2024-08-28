@@ -1,13 +1,15 @@
 #pragma once
 
-#include <filesystem>
 #include <functional>
 #include <map>
 #include <string>
-#include <system_error>
 
 #ifdef _WIN32
 #include <tchar.h>
+#else
+#ifndef TCHAR
+#define TCHAR char
+#endif
 #endif
 
 namespace selfupdate {
@@ -25,18 +27,18 @@ struct PackageInfo {
   std::string update_description;
 };
 
-std::error_code Query(const std::string &query_url,
-                      const std::multimap<std::string, std::string> &headers,
-                      const std::string &query_body,
-                      PackageInfo &package_info);
+bool Query(const std::string &query_url,
+           const std::multimap<std::string, std::string> &headers,
+           const std::string &query_body,
+           PackageInfo &package_info);
 
 typedef std::function<void(unsigned long long downloaded_bytes, unsigned long long total_bytes)>
     DownloadProgressMonitor;
-std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor);
+bool Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor);
 
-std::error_code Install(const PackageInfo &package_info,
-                        std::filesystem::path installer_path = {},    // default to the executable path
-                        std::filesystem::path install_location = {}); // default to the executable directory
+bool Install(const PackageInfo &package_info,
+             const TCHAR *installer_path = nullptr,    // default to the executable path
+             const TCHAR *install_location = nullptr); // default to the executable directory
 
 #ifdef _WIN32
 bool IsNewVersionFirstLaunched(int argc, const TCHAR *argv[]);

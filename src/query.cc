@@ -1,13 +1,9 @@
-#include "../include/selfupdate/selfupdate.h"
 #include "common.h"
+#include <selfupdate/selfupdate.h>
 #include <xl/http>
 #include <xl/json>
 #include <xl/log>
-
-#ifndef _WIN32
-#include <strings.h>
-#define strnicmp strncasecmp
-#endif
+#include <xl/native_string>
 
 namespace selfupdate {
 
@@ -32,10 +28,10 @@ const unsigned QUERY_TIMEOUT = 10000;
 
 } // namespace
 
-std::error_code Query(const std::string &query_url,
-                      const std::multimap<std::string, std::string> &headers,
-                      const std::string &query_body,
-                      PackageInfo &package_info) {
+bool Query(const std::string &query_url,
+           const std::multimap<std::string, std::string> &headers,
+           const std::string &query_body,
+           PackageInfo &package_info) {
   XL_LOG_INFO("Querying: ", query_url, ", headers: ", headers.size(), ", body: ", query_body);
   xl::http::Request request;
   request.url = query_url;
@@ -49,7 +45,7 @@ std::error_code Query(const std::string &query_url,
   unsigned status = xl::http::send(request, &response, &option);
   if (status != 200) {
     XL_LOG_ERROR("Querying failed. http status/error: ", status);
-    return make_selfupdate_error(SUE_NetworkError);
+    return false;
   }
   XL_LOG_INFO("Quering succeeded. Result: ", response_body);
   std::error_code ec;
@@ -57,7 +53,7 @@ std::error_code Query(const std::string &query_url,
   PackageInfoInternal json;
   if (!json.json_parse(response_body.c_str())) {
     XL_LOG_ERROR("Parsing json failed.");
-    return make_selfupdate_error(SUE_PackageInfoFormatError);
+    return false;
   }
 
   package_info.package_name = std::move(json.package_name);
@@ -77,18 +73,18 @@ std::error_code Query(const std::string &query_url,
   }
   if (package_info.package_format != PACKAGEINFO_PACKAGE_FORMAT_ZIP) {
     XL_LOG_ERROR("Unsupported package format: ", package_info.package_format);
-    return make_selfupdate_error(SUE_UnsupportedPackageFormat);
+    return false;
   }
   for (const auto &item : package_info.package_hash) {
     if (item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_MD5 && item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA1 &&
         item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA224 && item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA256 &&
         item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA384 && item.first != PACKAGEINFO_PACKAGE_HASH_ALGO_SHA512) {
       XL_LOG_ERROR("Unsupported hash algorithm: ", item.first);
-      return make_selfupdate_error(SUE_UnsupportedHashAlgorithm);
+      return false;
     }
   }
   XL_LOG_INFO("New version found: ", package_info.package_version, ", url: ", package_info.package_url);
-  return {};
+  return true;
 }
 
 } // namespace selfupdate

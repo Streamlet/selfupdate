@@ -1,7 +1,7 @@
-#include "../include/selfupdate/selfupdate.h"
 #include "common.h"
 #include <cstdio>
 #include <filesystem>
+#include <selfupdate/selfupdate.h>
 #include <sstream>
 #include <xl/crypto>
 #include <xl/http>
@@ -94,7 +94,7 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
 
 } // namespace
 
-std::error_code Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor) {
+bool Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor) {
   XL_LOG_INFO("Downloanding: ", package_info.package_url);
 
   std::error_code ec;
@@ -102,7 +102,7 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
   if (ec) {
     XL_LOG_ERROR("Get temp dir error. Error category: ", ec.category().name(), ", code: ", ec.value(),
                  ", message: ", ec.message());
-    return ec;
+    return false;
   }
 
   cache_dir /= package_info.package_name;
@@ -110,7 +110,7 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
   if (ec) {
     XL_LOG_ERROR("Create cache dir error. dir: ", cache_dir.u8string(), ", error category: ", ec.category().name(),
                  ", code: ", ec.value(), ", message: ", ec.message());
-    return ec;
+    return false;
   }
 
   std::string package_file_name = package_info.package_name + PACKAGE_NAME_VERSION_SEP + package_info.package_version +
@@ -127,7 +127,7 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
 #endif
     if (f == NULL) {
       XL_LOG_ERROR("Open local file error: ", package_file);
-      return make_selfupdate_error(SUE_OpenFileError);
+      return false;
     }
     XL_ON_BLOCK_EXIT(fclose, f);
     fseek(f, 0, SEEK_END);
@@ -155,7 +155,7 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
     int status = xl::http::send(request, &response);
     if (status != 200) {
       XL_LOG_ERROR("Request HEAD error: ", package_info.package_url, ", http status/error: ", status);
-      return make_selfupdate_error(SUE_NetworkError);
+      return false;
     }
 
     long long total_size = package_info.package_size;
@@ -167,7 +167,7 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
 
     if (total_size != package_info.package_size) {
       XL_LOG_ERROR("Package size error, expected: ", package_info.package_size, ", got: ", total_size);
-      return make_selfupdate_error(SUE_PackageSizeError);
+      return false;
     }
 
     std::stringstream range_expr;
@@ -191,11 +191,11 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
                            });
     if (status != 200) {
       XL_LOG_ERROR("Download package error: ", package_info.package_url, ", status/error: ", status);
-      return make_selfupdate_error(SUE_NetworkError);
+      return false;
     }
     if (status != 200) {
       XL_LOG_ERROR("Querying failed. http status: ", status);
-      return make_selfupdate_error(SUE_NetworkError);
+      return false;
     }
   }
 
@@ -206,11 +206,11 @@ std::error_code Download(const PackageInfo &package_info, DownloadProgressMonito
   if (!VerifyPackage(package_file, package_info.package_hash)) {
     std::filesystem::remove(package_file);
     XL_LOG_ERROR("Verify package error: ", package_file);
-    return make_selfupdate_error(SUE_PackageVerifyError);
+    return false;
   }
 
   XL_LOG_INFO("Downloaded package OK: ", package_file);
-  return {};
+  return true;
 }
 
 } // namespace selfupdate

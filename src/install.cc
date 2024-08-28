@@ -1,15 +1,13 @@
-#include "../include/selfupdate/selfupdate.h"
 #include "common.h"
 #include <filesystem>
+#include <selfupdate/selfupdate.h>
 #include <xl/log>
 #include <xl/native_string>
 #include <xl/process>
 
 namespace selfupdate {
 
-std::error_code Install(const PackageInfo &package_info,
-                        std::filesystem::path installer_path /*= {}*/,
-                        std::filesystem::path install_location /* = {}*/) {
+bool Install(const PackageInfo &package_info, const TCHAR *installer_path, const TCHAR *install_location) {
   XL_LOG_INFO("Installing: ", package_info.package_name);
 
   std::error_code ec;
@@ -17,7 +15,7 @@ std::error_code Install(const PackageInfo &package_info,
   if (ec) {
     XL_LOG_ERROR("Get temp dir error. Error category: ", ec.category().name(), ", code: ", ec.value(),
                  ", message: ", ec.message());
-    return ec;
+    return false;
   }
   cache_dir /= package_info.package_name;
   std::string package_file_name = package_info.package_name + PACKAGE_NAME_VERSION_SEP + package_info.package_version +
@@ -26,27 +24,28 @@ std::error_code Install(const PackageInfo &package_info,
   if (!std::filesystem::exists(package_file, ec)) {
     XL_LOG_ERROR("Package file missing: ", package_file.u8string(), ", error category: ", ec.category().name(),
                  ", code: ", ec.value(), ", message: ", ec.message());
-    return ec;
+    return false;
   }
 
   std::filesystem::path exe_path = xl::process::executable_path();
   std::filesystem::path exe_dir = exe_path.parent_path();
   std::filesystem::path exe_file = exe_path.filename();
 
-  if (installer_path.empty()) {
-    installer_path = exe_path;
+  if (installer_path == nullptr) {
+    installer_path = exe_path.c_str();
   }
-  if (install_location.empty()) {
-    install_location = exe_dir;
+  if (install_location == nullptr) {
+    install_location = exe_dir.c_str();
   }
 
-  std::filesystem::path copied_installer_path = package_file.parent_path() / installer_path.filename();
+  std::filesystem::path copied_installer_path =
+      package_file.parent_path() / std::filesystem::path(installer_path).filename();
   std::filesystem::copy_file(installer_path, copied_installer_path, std::filesystem::copy_options::overwrite_existing,
                              ec);
   if (ec) {
-    XL_LOG_ERROR("Copy installer failed, from: ", installer_path.u8string(), ", to: ", copied_installer_path.u8string(),
+    XL_LOG_ERROR("Copy installer failed, from: ", installer_path, ", to: ", copied_installer_path.c_str(),
                  ", error category: ", ec.category().name(), ", code: ", ec.value(), ", message: ", ec.message());
-    return ec;
+    return false;
   }
 
   long pid = xl::process::pid();
@@ -54,7 +53,7 @@ std::error_code Install(const PackageInfo &package_info,
               _T("--" INSTALLER_ARGUMENT_UPDATE), _T("--" INSTALLER_ARGUMENT_WAIT_PID), pid,
               _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE), package_info.force_update ? _T("1") : _T("0"),
               _T("--" INSTALLER_ARGUMENT_SOURCE), package_file.c_str(), _T("--" INSTALLER_ARGUMENT_TARGET),
-              install_location.c_str(), _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE), exe_file.c_str());
+              install_location, _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE), exe_file.c_str());
   long installer_pid = xl::process::start(copied_installer_path.native(),
                                           {
                                               _T("--" INSTALLER_ARGUMENT_UPDATE),
@@ -65,7 +64,7 @@ std::error_code Install(const PackageInfo &package_info,
                                               _T("--" INSTALLER_ARGUMENT_SOURCE),
                                               package_file.native(),
                                               _T("--" INSTALLER_ARGUMENT_TARGET),
-                                              install_location.native(),
+                                              install_location,
                                               _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE),
                                               exe_file.native(),
                                           },
@@ -75,12 +74,12 @@ std::error_code Install(const PackageInfo &package_info,
                  _T("--" INSTALLER_ARGUMENT_UPDATE), _T("--" INSTALLER_ARGUMENT_WAIT_PID), pid,
                  _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE), package_info.force_update ? _T("1") : _T("0"),
                  _T("--" INSTALLER_ARGUMENT_SOURCE), package_file.c_str(), _T("--" INSTALLER_ARGUMENT_TARGET),
-                 install_location.c_str(), _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE), exe_file.c_str());
-    return make_selfupdate_error(SUE_RunInstallerError);
+                 install_location, _T("--" INSTALLER_ARGUMENT_LAUNCH_FILE), exe_file.c_str());
+    return false;
   }
 
   XL_LOG_INFO("Launched installer");
-  return {};
+  return true;
 }
 
 } // namespace selfupdate
