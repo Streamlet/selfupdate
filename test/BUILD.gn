@@ -1,0 +1,48 @@
+executable("old_client") {
+  testonly = true
+  if (is_win) {
+    configs += [ "../build/config/win:console_subsystem" ]
+  }
+
+  include_dirs = [ "../include" ]
+  sources = [ "old_client.cc" ]
+
+  deps = [
+    "../src:installer",
+    "../src:selfupdate",
+  ]
+}
+
+executable("new_client") {
+  testonly = true
+  if (is_win) {
+    configs += [ "../build/config/win:console_subsystem" ]
+  }
+
+  include_dirs = [ "../include" ]
+  sources = [ "new_client.cc" ]
+
+  deps = [ "../src:selfupdate" ]
+}
+
+copy("http_server") {
+  testonly = true
+  sources = [ "tools/server.py" ]
+  outputs = [ "$root_out_dir/server.py" ]
+}
+
+copy("test_script") {
+  testonly = true
+  sources = [ "tools/test.py" ]
+  outputs = [ "$root_out_dir/test.py" ]
+}
+
+group("test") {
+  testonly = true
+  deps = [
+    ":http_server",
+    ":new_client",
+    ":old_client",
+    ":test_script",
+  ]
+}

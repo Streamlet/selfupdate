@@ -44,4 +44,4 @@ jobs:
 
       - name: Test
         run: |
-          python src/sample/test.py out/${{ matrix.config }}_${{ matrix.arch }}
+          python out/${{ matrix.config }}_${{ matrix.arch }}/test.py

@@ -12,7 +12,7 @@ static_library("selfupdate") {
     "query.cc",
   ]
 
-  public_deps = [ "../../thirdparty:utility" ]
+  public_deps = [ "../thirdparty:utility" ]
 }
 
 static_library("installer") {
@@ -26,5 +26,12 @@ static_library("installer") {
     "installer.cc",
   ]
 
-  public_deps = [ "../../thirdparty:utility" ]
+  public_deps = [ "../thirdparty:utility" ]
+}
+
+group("src") {
+  deps = [
+    ":installer",
+    ":selfupdate",
+  ]
 }

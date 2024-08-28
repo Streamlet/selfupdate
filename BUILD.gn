@@ -1,15 +1,8 @@
 group("all") {
-  deps = [
-    "src/client:installer",
-    "src/client:selfupdate",
-    "src/server",
-  ]
+  deps = [ "src" ]
 }
 
 group("test") {
   testonly = true
-  deps = [
-    "src/sample:new_client",
-    "src/sample:old_client",
-  ]
+  deps = [ "test" ]
 }

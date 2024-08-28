@@ -1,5 +1,3 @@
-import("../build_options.gni")
-
 # utility
 
 config("utility_public_config") {

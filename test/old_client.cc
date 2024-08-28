@@ -26,7 +26,7 @@ int _tmain(int argc, const TCHAR *argv[]) {
 
   XL_LOG_INFO("Step 1: query package info");
   selfupdate::PackageInfo package_info;
-  std::error_code ec = selfupdate::Query("http://localhost:8080/sample_package/1.0", {}, "", package_info);
+  std::error_code ec = selfupdate::Query("http://localhost:8080/query", {}, "", package_info);
   if (ec) {
     return -1;
   }
