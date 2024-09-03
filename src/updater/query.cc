@@ -48,7 +48,6 @@ bool Query(const std::string &query_url,
     return false;
   }
   XL_LOG_INFO("Quering succeeded. Result: ", response_body);
-  std::error_code ec;
 
   PackageInfoInternal json;
   if (!json.json_parse(response_body.c_str())) {

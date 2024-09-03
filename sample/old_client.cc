@@ -1,13 +1,11 @@
 #include <cmath>
 #include <selfupdate/installer.h>
-#include <selfupdate/updater.h>
+#include <selfupdate/selfupdate.h>
 #include <xl/log_setup>
 #include <xl/native_string>
-#include <xl/scope_exit>
 
 int _tmain(int argc, const TCHAR *argv[]) {
   xl::log::setup(_T("old_client"));
-  XL_ON_BLOCK_EXIT(xl::log::shutdown);
 
   if (selfupdate::IsNewVersionFirstLaunched(argc, argv)) {
     XL_LOG_ERROR("ERROR! old_client lauched as new_client, previous upgrading failed!");
@@ -27,7 +25,7 @@ int _tmain(int argc, const TCHAR *argv[]) {
 
   XL_LOG_INFO("Step 1: query package info");
   selfupdate::PackageInfo package_info;
-  if (!selfupdate::Query("http://localhost:8080/query", {}, "", package_info)) {
+  if (!selfupdate::Query("http://localhost:8080/sample_package/1.0", {}, "", package_info)) {
     return -1;
   }
 
@@ -45,17 +43,18 @@ int _tmain(int argc, const TCHAR *argv[]) {
   XL_LOG_INFO("update_description: ", package_info.update_description);
 
   XL_LOG_INFO("Step 2: download package");
-  bool r = selfupdate::Download(package_info, [](unsigned long long downloaded_bytes, unsigned long long total_bytes) {
+  ec = selfupdate::Download(package_info, [](unsigned long long downloaded_bytes, unsigned long long total_bytes) {
     XL_LOG_INFO(std::to_string(round(downloaded_bytes * 10000.0 / total_bytes) / 100) + "%,",
                 std::to_string(downloaded_bytes) + "/" + std::to_string(total_bytes));
   });
 
-  if (!r) {
+  if (ec) {
     return -1;
   }
 
   XL_LOG_INFO("Step 3: install package");
-  if (!selfupdate::Install(package_info)) {
+  ec = selfupdate::Install(package_info);
+  if (ec) {
     return -1;
   }
 

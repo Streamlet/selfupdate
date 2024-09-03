@@ -4,8 +4,6 @@
 import os
 import sys
 import shutil
-import zipfile
-import hashlib
 import subprocess
 import locale
 import time

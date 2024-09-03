@@ -7,6 +7,8 @@ static_library("installer") {
     "../../include/selfupdate/installer.h",
     "common.h",
     "installer.cc",
+    "zip_installer.cc",
+    "zip_installer.h",
   ]
 
   public_deps = [ "../../thirdparty:utility" ]

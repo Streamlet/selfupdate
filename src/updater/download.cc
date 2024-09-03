@@ -1,11 +1,12 @@
 #include "../common.h"
 #include <cstdio>
-#include <filesystem>
 #include <selfupdate/updater.h>
 #include <sstream>
 #include <xl/crypto>
+#include <xl/file>
 #include <xl/http>
 #include <xl/log>
+#include <xl/native_string>
 #include <xl/scope_exit>
 
 #ifdef _WIN32
@@ -21,7 +22,7 @@ namespace selfupdate {
 
 namespace {
 
-long long ReadInteger(const std::filesystem::path &file) {
+long long ReadInteger(const xl::native_string &file) {
 #ifdef _MSC_VER
   FILE *f = _wfopen(file.c_str(), L"r");
 #else
@@ -37,7 +38,7 @@ long long ReadInteger(const std::filesystem::path &file) {
   fclose(f);
   return v;
 }
-void WriteInteger(const std::filesystem::path &file, long long v) {
+void WriteInteger(const xl::native_string &file, long long v) {
 #ifdef _MSC_VER
   FILE *f = _wfopen(file.c_str(), L"w");
 #else
@@ -52,7 +53,7 @@ void WriteInteger(const std::filesystem::path &file, long long v) {
 
 const char *DOWNLOADING_FILE_SUFFIX = ".downloading";
 
-bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std::string, std::string> &hashes) {
+bool VerifyPackage(const xl::native_string &package_file, const std::map<std::string, std::string> &hashes) {
   for (const auto &item : hashes) {
     std::string hash = item.second;
     std::transform(hash.begin(), hash.end(), hash.begin(), [](unsigned char c) {
@@ -96,35 +97,31 @@ bool VerifyPackage(const std::filesystem::path &package_file, const std::map<std
 
 bool Download(const PackageInfo &package_info, DownloadProgressMonitor download_progress_monitor) {
   XL_LOG_INFO("Downloanding: ", package_info.package_url);
-
-  std::error_code ec;
-  std::filesystem::path cache_dir = std::filesystem::temp_directory_path(ec);
-  if (ec) {
-    XL_LOG_ERROR("Get temp dir error. Error category: ", ec.category().name(), ", code: ", ec.value(),
-                 ", message: ", ec.message());
+  xl::native_string cache_dir = xl::fs::tmp_dir();
+  if (cache_dir.empty()) {
+    XL_LOG_ERROR("Get temp dir error.");
     return false;
   }
 
-  cache_dir /= package_info.package_name;
-  std::filesystem::create_directories(cache_dir, ec);
-  if (ec) {
-    XL_LOG_ERROR("Create cache dir error. dir: ", cache_dir.u8string(), ", error category: ", ec.category().name(),
-                 ", code: ", ec.value(), ", message: ", ec.message());
+  cache_dir = xl::path::join(cache_dir, xl::encoding::utf8_to_native(package_info.package_name));
+  xl::fs::mkdirs(cache_dir.c_str());
+  if (!xl::fs::exists(cache_dir.c_str())) {
+    XL_LOG_ERROR("Create cache dir error. dir: ", cache_dir);
     return false;
   }
+  XL_LOG_ERROR("Cache dir: ", cache_dir);
 
   std::string package_file_name = package_info.package_name + PACKAGE_NAME_VERSION_SEP + package_info.package_version +
                                   FILE_NAME_EXT_SEP + package_info.package_format;
-  std::filesystem::path package_file = cache_dir / package_file_name;
-  std::filesystem::path package_downloading_file = cache_dir / (package_file_name + DOWNLOADING_FILE_SUFFIX);
+  xl::native_string package_file = xl::path::join(cache_dir, xl::encoding::utf8_to_native(package_file_name));
+  XL_LOG_ERROR("Package file: ", package_file);
+  xl::native_string package_downloading_file =
+      xl::path::join(cache_dir, xl::encoding::utf8_to_native(package_file_name + DOWNLOADING_FILE_SUFFIX));
+  XL_LOG_ERROR("Downloading file: ", package_downloading_file);
   long long downloaded_size = ReadInteger(package_downloading_file);
 
   {
-#ifdef _MSC_VER
-    FILE *f = _wfopen(package_file.c_str(), L"wb");
-#else
-    FILE *f = fopen(package_file.c_str(), "wb");
-#endif
+    FILE *f = _tfopen(package_file.c_str(), _T("wb"));
     if (f == NULL) {
       XL_LOG_ERROR("Open local file error: ", package_file);
       return false;
@@ -202,9 +199,9 @@ bool Download(const PackageInfo &package_info, DownloadProgressMonitor download_
   // if (downloaded_size != total_size) {
   //   return make_selfupdate_error(SUE_PackageSizeError);
   // }
-  std::filesystem::remove(package_downloading_file);
+  xl::fs::remove(package_downloading_file.c_str());
   if (!VerifyPackage(package_file, package_info.package_hash)) {
-    std::filesystem::remove(package_file);
+    xl::fs::remove(package_file.c_str());
     XL_LOG_ERROR("Verify package error: ", package_file);
     return false;
   }

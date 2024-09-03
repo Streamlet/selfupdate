@@ -1,10 +1,11 @@
 #include "../common.h"
+#include "zip_installer.h"
 #include <cstdio>
-#include <filesystem>
 #include <selfupdate/installer.h>
 #include <sstream>
 #include <xl/cmdline_options>
 #include <xl/encoding>
+#include <xl/file>
 #include <xl/log>
 #include <xl/native_string>
 #include <xl/process>
@@ -21,9 +22,9 @@ namespace selfupdate {
 struct InstallContext {
   int wait_pid = 0;
   bool force_update = false;
-  std::filesystem::path source;
-  std::filesystem::path target;
-  std::filesystem::path launch_file;
+  xl::native_string source;
+  xl::native_string target;
+  xl::native_string launch_file;
 };
 
 namespace {
@@ -73,83 +74,7 @@ const InstallContext *IsInstallMode(const TCHAR *command_line) {
 }
 #endif
 
-namespace {
-
-const char *INSTALL_LOCATION_OLD_SUFFIX = ".old";
-const char *INSTALL_LOCATION_NEW_SUFFIX = ".new";
 const int INSTALL_WAIT_FOR_MAIN_PROCESS = 10000;
-
-bool InstallZipPackage(const std::filesystem::path &package_file, const std::filesystem::path &install_location) {
-  XL_LOG_INFO(_T("Installing zip package, from: "), package_file.c_str(), _T(", to: "), install_location.c_str());
-
-  std::filesystem::path install_location_old = install_location;
-  install_location_old += INSTALL_LOCATION_OLD_SUFFIX;
-  std::filesystem::remove_all(install_location_old);
-  std::filesystem::path install_location_new = install_location;
-  install_location_new += INSTALL_LOCATION_NEW_SUFFIX;
-  std::filesystem::remove_all(install_location_new);
-
-  XL_LOG_INFO(_T("Extracting package, from: "), package_file.c_str(), _T(", to: "), install_location_new.c_str());
-  if (!xl::zip::extract(package_file.c_str(), install_location_new.c_str())) {
-    XL_LOG_INFO(_T("Extract package failed, from: "), package_file.c_str(), _T(", to: "), install_location_new.c_str());
-    return false;
-  }
-
-  XL_LOG_INFO(_T("Renaming old installation, from: "), install_location.c_str(), _T(", to: "),
-              install_location_old.c_str());
-  std::error_code ec;
-  for (int i = 0; i < INSTALL_WAIT_FOR_MAIN_PROCESS && std::filesystem::exists(install_location); ++i) {
-    std::filesystem::rename(install_location, install_location_old, ec);
-    if (ec && i + 1 < INSTALL_WAIT_FOR_MAIN_PROCESS) {
-      XL_LOG_WARN("Renaming old installation failed, retrying. From: ", install_location.u8string(),
-                  ", to: ", install_location_old.u8string(), ", error category: ", ec.category().name(),
-                  ", code: ", ec.value(), ", message: ", ec.message());
-      xl::process::sleep(1000);
-    }
-  }
-  if (std::filesystem::exists(install_location)) {
-    XL_LOG_ERROR("Renaming old installation failed. From: ", install_location.u8string(),
-                 ", to: ", install_location_old.u8string(), ", error category: ", ec.category().name(),
-                 ", code: ", ec.value(), ", message: ", ec.message());
-    return false;
-  }
-
-  XL_LOG_INFO(_T("Renaming new installation, from: "), install_location_new.c_str(), _T(", to: "),
-              install_location.c_str());
-  std::filesystem::rename(install_location_new, install_location, ec);
-  if (ec) {
-    XL_LOG_ERROR("Renaming new installation failed. From: ", install_location_new.u8string(),
-                 ", to: ", install_location.u8string(), ", error category: ", ec.category().name(),
-                 ", code: ", ec.value(), ", message: ", ec.message());
-    return false;
-  }
-
-  if (!std::filesystem::exists(install_location)) {
-    XL_LOG_ERROR(_T("New installation missing: "), install_location.c_str());
-    return false;
-  }
-
-  if (std::filesystem::exists(install_location_old)) {
-    XL_LOG_INFO(_T("Copying extra files from old installation, from: "), install_location_old.c_str(), _T(", to: "),
-                install_location.c_str());
-    for (const std::filesystem::directory_entry &dir_entry :
-         std::filesystem::recursive_directory_iterator(install_location_old)) {
-      std::filesystem::path file_in_new_path =
-          install_location / dir_entry.path().lexically_relative(install_location_old);
-      if (!std::filesystem::exists(file_in_new_path)) {
-        XL_LOG_INFO(_T("Copying"), dir_entry.path().c_str(), _T("to"), file_in_new_path.c_str());
-        std::filesystem::rename(dir_entry.path(), file_in_new_path);
-      }
-    }
-    XL_LOG_INFO(_T("Deleting old installation: "), install_location_old.c_str());
-    std::filesystem::remove_all(install_location_old);
-  }
-
-  XL_LOG_INFO("Install zip package OK");
-  return true;
-}
-
-} // namespace
 
 bool DoInstall(const InstallContext *install_context) {
   XL_LOG_INFO(_T("Installing, from: "), install_context->source.c_str(), _T(", to: "), install_context->target.c_str());
@@ -166,12 +91,12 @@ bool DoInstall(const InstallContext *install_context) {
     xl::process::wait(install_context->wait_pid);
   }
 
-  std::filesystem::path package_file = install_context->source;
-  std::filesystem::path install_location = install_context->target;
+  xl::native_string package_file = install_context->source;
+  xl::native_string install_location = install_context->target;
 
-  xl::native_string package_format = package_file.extension().native();
+  xl::native_string package_format = xl::path::extname(package_file.c_str());
   if (package_format == _T(FILE_NAME_EXT_SEP PACKAGEINFO_PACKAGE_FORMAT_ZIP)) {
-    if (!InstallZipPackage(std::move(package_file), std::move(install_location))) {
+    if (!InstallZipPackage(package_file, install_location)) {
       XL_LOG_ERROR(_T("Install package failed, from: "), install_context->source.c_str(), _T(", to: "),
                    install_context->target.c_str());
       return false;
@@ -180,14 +105,13 @@ bool DoInstall(const InstallContext *install_context) {
     XL_LOG_ERROR(_T("Unsupported package format: "), package_format);
     return false;
   }
-
-  std::filesystem::remove(package_file);
+  xl::fs::remove(package_file.c_str());
 
   {
 #ifdef _WIN32
     xl::native_string_stream ss;
     ss << _T("cmd /C ping 127.0.0.1 -n 10 >Nul & Del /F /Q \"") << exe_path << _T("\" & RMDIR /Q \"")
-       << std::filesystem::path(exe_path).parent_path().native() << _T("\"");
+       << xl::path::dirname(exe_path.c_str()) << _T("\"");
     xl::native_string cmd = ss.str();
     XL_LOG_INFO(_T("Self-delete command: "), cmd);
     STARTUPINFO si = {sizeof(STARTUPINFO)};
@@ -196,26 +120,22 @@ bool DoInstall(const InstallContext *install_context) {
     ::CloseHandle(pi.hThread);
     ::CloseHandle(pi.hProcess);
 #else
-    std::filesystem::remove(exe_path);
+    xl::fs::remove(exe_path.c_str());
 #endif
   }
 
   {
-    std::filesystem::path launch_path = install_location / install_context->launch_file;
-    std::filesystem::permissions(launch_path,
-                                 std::filesystem::perms::owner_exec | std::filesystem::perms::group_exec |
-                                     std::filesystem::perms::others_exec,
-                                 std::filesystem::perm_options::add);
+    xl::native_string launch_path = xl::path::join(install_location, install_context->launch_file);
     XL_LOG_INFO(_T("Launching new version. Command line: "), launch_path.c_str(),
                 _T("--" INSTALLER_ARGUMENT_NEW_VERSION), _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE),
                 install_context->force_update ? _T("1") : _T("0"));
-    long pid = xl::process::start(launch_path.native(),
+    long pid = xl::process::start(launch_path.c_str(),
                                   {
                                       _T("--" INSTALLER_ARGUMENT_NEW_VERSION),
                                       _T("--" INSTALLER_ARGUMENT_FORCE_UPDATE),
                                       install_context->force_update ? _T("1") : _T("0"),
                                   },
-                                  launch_path.parent_path().native());
+                                  install_location);
     if (pid == 0) {
       XL_LOG_ERROR(_T("Launch new version failed. Command line: "), launch_path.c_str(),
                    _T("--" INSTALLER_ARGUMENT_NEW_VERSION));
