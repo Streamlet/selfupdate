@@ -8,4 +8,4 @@ DEPS:
 
   thirdparty/utility:
     GIT_REPO: https://github.com/Streamlet/utility.git
-    GIT_TAG: master
+    GIT_TAG: v0.2
