@@ -1,4 +1,4 @@
-static_library("installer") {
+source_set("installer") {
   if (is_posix) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }

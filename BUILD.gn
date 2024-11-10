@@ -1,5 +1,9 @@
-group("all") {
-  deps = [ "src" ]
+static_library("selfupdate") {
+  complete_static_lib = true
+  deps = [
+    "src/installer",
+    "src/updater",
+  ]
 }
 
 group("test") {

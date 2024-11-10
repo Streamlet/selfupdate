@@ -1,4 +1,4 @@
-static_library("updater") {
+source_set("updater") {
   if (is_posix) {
     cflags = [ "-Wno-deprecated-declarations" ]
   }

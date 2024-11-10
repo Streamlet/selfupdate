@@ -1,6 +1,0 @@
-group("src") {
-  deps = [
-    "installer",
-    "updater",
-  ]
-}
