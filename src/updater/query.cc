@@ -68,7 +68,7 @@ bool Query(const std::string &query_url,
 
   if (!package_info.has_new_version) {
     XL_LOG_INFO("No new version.");
-    return {};
+    return true;
   }
   if (package_info.package_format != PACKAGEINFO_PACKAGE_FORMAT_ZIP) {
     XL_LOG_ERROR("Unsupported package format: ", package_info.package_format);
