@@ -1,21 +1,20 @@
-# utility
+# xlatform
 
-gn("utility") {
-  gn_root_dir = "utility"
-  gn_targets = [ ":utility" ]
+gn("xlatform") {
+  gn_root_dir = "xlatform"
+  gn_targets = [ ":xlatform" ]
   export_include_dirs = [
-    "utility/include",
-    "utility/thirdparty/rapidjson/include",
+    "xlatform/include",
+    "xlatform/thirdparty/yyjson/src",
   ]
-  export_defines = [ "RAPIDJSON_NOMEMBERITERATORCLASS" ]
   if (is_win) {
-    export_libs = [ "utility.lib" ]
+    export_libs = [ "xlatform.lib" ]
     depend_libs = [
       "WinHttp.lib",
       "ws2_32.lib",
     ]
   } else {
-    export_libs = [ "utility" ]
+    export_libs = [ "xlatform" ]
     depend_libs = [ "curl" ]
   }
 }

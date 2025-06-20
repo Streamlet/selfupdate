@@ -6,6 +6,6 @@ DEPS:
     GIT_REPO: https://github.com/Streamlet/gn_toolchain.git
     GIT_TAG: master
 
-  thirdparty/utility:
-    GIT_REPO: https://github.com/Streamlet/utility.git
-    GIT_TAG: v0.2
+  thirdparty/xlatform:
+    GIT_REPO: https://github.com/Streamlet/xlatform.git
+    GIT_TAG: v1.0

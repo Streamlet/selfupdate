@@ -11,5 +11,5 @@ source_set("installer") {
     "zip_installer.h",
   ]
 
-  public_deps = [ "../../thirdparty:utility" ]
+  public_deps = [ "../../thirdparty:xlatform" ]
 }

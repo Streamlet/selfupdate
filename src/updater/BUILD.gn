@@ -12,5 +12,5 @@ source_set("updater") {
     "query.cc",
   ]
 
-  public_deps = [ "../../thirdparty:utility" ]
+  public_deps = [ "../../thirdparty:xlatform" ]
 }
