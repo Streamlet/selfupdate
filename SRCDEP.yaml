@@ -8,4 +8,4 @@ DEPS:
 
   thirdparty/xlatform:
     GIT_REPO: https://github.com/Streamlet/xlatform.git
-    GIT_TAG: v1.0
+    GIT_TAG: v1.0.1
