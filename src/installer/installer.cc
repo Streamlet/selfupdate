@@ -116,7 +116,7 @@ bool DoInstall(const InstallContext *install_context) {
     XL_LOG_INFO(_T("Self-delete command: "), cmd);
     STARTUPINFO si = {sizeof(STARTUPINFO)};
     PROCESS_INFORMATION pi = {};
-    ::CreateProcess(nullptr, cmd.data(), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
+    ::CreateProcess(nullptr, &cmd[0], nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
     ::CloseHandle(pi.hThread);
     ::CloseHandle(pi.hProcess);
 #else
